@@ -14,7 +14,115 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      custos: {
+        Row: {
+          created_at: string
+          data: string
+          descricao: string | null
+          id: string
+          km: number | null
+          tipo: string
+          valor: number
+          veiculo_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: string
+          descricao?: string | null
+          id?: string
+          km?: number | null
+          tipo: string
+          valor: number
+          veiculo_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          descricao?: string | null
+          id?: string
+          km?: number | null
+          tipo?: string
+          valor?: number
+          veiculo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custos_veiculo_id_fkey"
+            columns: ["veiculo_id"]
+            isOneToOne: false
+            referencedRelation: "veiculos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documentos: {
+        Row: {
+          created_at: string
+          id: string
+          observacao: string | null
+          tipo: string
+          updated_at: string
+          veiculo_id: string
+          vencimento: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          observacao?: string | null
+          tipo: string
+          updated_at?: string
+          veiculo_id: string
+          vencimento: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          observacao?: string | null
+          tipo?: string
+          updated_at?: string
+          veiculo_id?: string
+          vencimento?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentos_veiculo_id_fkey"
+            columns: ["veiculo_id"]
+            isOneToOne: false
+            referencedRelation: "veiculos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      veiculos: {
+        Row: {
+          created_at: string
+          id: string
+          km_atual: number
+          motorista: string | null
+          nome: string
+          placa: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          km_atual?: number
+          motorista?: string | null
+          nome: string
+          placa: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          km_atual?: number
+          motorista?: string | null
+          nome?: string
+          placa?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
