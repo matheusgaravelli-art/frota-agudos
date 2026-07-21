@@ -1,5 +1,15 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, Truck, Wallet, CalendarClock, LogOut, Menu, X } from "lucide-react";
+import {
+  LayoutDashboard,
+  Truck,
+  Wallet,
+  CalendarClock,
+  Users,
+  Wrench,
+  LogOut,
+  Menu,
+  X,
+} from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -8,7 +18,9 @@ import { Button } from "@/components/ui/button";
 const nav = [
   { to: "/painel", label: "Painel", icon: LayoutDashboard },
   { to: "/veiculos", label: "Veículos", icon: Truck },
+  { to: "/motoristas", label: "Motoristas", icon: Users },
   { to: "/custos", label: "Custos", icon: Wallet },
+  { to: "/manutencoes", label: "Manutenções", icon: Wrench },
   { to: "/vencimentos", label: "Vencimentos", icon: CalendarClock },
 ] as const;
 

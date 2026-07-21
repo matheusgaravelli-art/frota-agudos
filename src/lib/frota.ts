@@ -1,19 +1,26 @@
 import { supabase } from "@/integrations/supabase/client";
 
+export type StatusVeiculo = "ativo" | "manutencao" | "desativado";
+
 export type Veiculo = {
   id: string;
   nome: string;
   placa: string;
+  marca_modelo: string | null;
   motorista: string | null;
+  motorista_id: string | null;
   km_atual: number;
+  status: StatusVeiculo;
   created_at: string;
   updated_at: string;
 };
 
+export type TipoCusto = "combustivel" | "manutencao" | "seguro" | "imprevisto" | "outros";
+
 export type Custo = {
   id: string;
   veiculo_id: string;
-  tipo: "combustivel" | "manutencao" | "outros";
+  tipo: TipoCusto;
   valor: number;
   km: number | null;
   data: string;
@@ -21,24 +28,61 @@ export type Custo = {
   created_at: string;
 };
 
+export type TipoDocumento = "documento" | "seguro" | "revisao";
+
 export type Documento = {
   id: string;
   veiculo_id: string;
-  tipo: "licenciamento" | "seguro" | "revisao";
+  tipo: TipoDocumento;
   vencimento: string;
   observacao: string | null;
   created_at: string;
   updated_at: string;
 };
 
-export const tipoCustoLabel: Record<Custo["tipo"], string> = {
+export type Motorista = {
+  id: string;
+  nome: string;
+  contato: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Manutencao = {
+  id: string;
+  veiculo_id: string;
+  peca_servico: string;
+  data: string;
+  oficina: string | null;
+  observacoes: string | null;
+  valor: number | null;
+  custo_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export const statusVeiculoLabel: Record<StatusVeiculo, string> = {
+  ativo: "Ativo",
+  manutencao: "Em manutenção",
+  desativado: "Desativado",
+};
+
+export const statusVeiculoTone: Record<StatusVeiculo, string> = {
+  ativo: "bg-success/10 text-success border-success/30",
+  manutencao: "bg-warning/15 text-warning-foreground border-warning/40",
+  desativado: "bg-muted text-muted-foreground border-border",
+};
+
+export const tipoCustoLabel: Record<TipoCusto, string> = {
   combustivel: "Combustível",
   manutencao: "Manutenção",
+  seguro: "Seguro",
+  imprevisto: "Imprevisto",
   outros: "Outros",
 };
 
-export const tipoDocLabel: Record<Documento["tipo"], string> = {
-  licenciamento: "Licenciamento",
+export const tipoDocLabel: Record<TipoDocumento, string> = {
+  documento: "Documento",
   seguro: "Seguro",
   revisao: "Revisão",
 };
@@ -59,6 +103,18 @@ export async function listDocumentos() {
   const { data, error } = await supabase.from("documentos").select("*").order("vencimento");
   if (error) throw error;
   return data as Documento[];
+}
+
+export async function listMotoristas() {
+  const { data, error } = await supabase.from("motoristas").select("*").order("nome");
+  if (error) throw error;
+  return data as Motorista[];
+}
+
+export async function listManutencoes() {
+  const { data, error } = await supabase.from("manutencoes").select("*").order("data", { ascending: false });
+  if (error) throw error;
+  return data as Manutencao[];
 }
 
 export function formatBRL(v: number) {

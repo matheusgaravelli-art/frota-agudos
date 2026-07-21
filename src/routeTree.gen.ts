@@ -15,6 +15,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedVencimentosRouteImport } from './routes/_authenticated/vencimentos'
 import { Route as AuthenticatedVeiculosRouteImport } from './routes/_authenticated/veiculos'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
+import { Route as AuthenticatedMotoristasRouteImport } from './routes/_authenticated/motoristas'
+import { Route as AuthenticatedManutencoesRouteImport } from './routes/_authenticated/manutencoes'
 import { Route as AuthenticatedCustosRouteImport } from './routes/_authenticated/custos'
 
 const AuthRoute = AuthRouteImport.update({
@@ -47,6 +49,17 @@ const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
   path: '/painel',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMotoristasRoute = AuthenticatedMotoristasRouteImport.update({
+  id: '/motoristas',
+  path: '/motoristas',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedManutencoesRoute =
+  AuthenticatedManutencoesRouteImport.update({
+    id: '/manutencoes',
+    path: '/manutencoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCustosRoute = AuthenticatedCustosRouteImport.update({
   id: '/custos',
   path: '/custos',
@@ -57,6 +70,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/custos': typeof AuthenticatedCustosRoute
+  '/manutencoes': typeof AuthenticatedManutencoesRoute
+  '/motoristas': typeof AuthenticatedMotoristasRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/veiculos': typeof AuthenticatedVeiculosRoute
   '/vencimentos': typeof AuthenticatedVencimentosRoute
@@ -65,6 +80,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/custos': typeof AuthenticatedCustosRoute
+  '/manutencoes': typeof AuthenticatedManutencoesRoute
+  '/motoristas': typeof AuthenticatedMotoristasRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/veiculos': typeof AuthenticatedVeiculosRoute
   '/vencimentos': typeof AuthenticatedVencimentosRoute
@@ -75,6 +92,8 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/custos': typeof AuthenticatedCustosRoute
+  '/_authenticated/manutencoes': typeof AuthenticatedManutencoesRoute
+  '/_authenticated/motoristas': typeof AuthenticatedMotoristasRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/veiculos': typeof AuthenticatedVeiculosRoute
   '/_authenticated/vencimentos': typeof AuthenticatedVencimentosRoute
@@ -85,17 +104,29 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/custos'
+    | '/manutencoes'
+    | '/motoristas'
     | '/painel'
     | '/veiculos'
     | '/vencimentos'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/custos' | '/painel' | '/veiculos' | '/vencimentos'
+  to:
+    | '/'
+    | '/auth'
+    | '/custos'
+    | '/manutencoes'
+    | '/motoristas'
+    | '/painel'
+    | '/veiculos'
+    | '/vencimentos'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/custos'
+    | '/_authenticated/manutencoes'
+    | '/_authenticated/motoristas'
     | '/_authenticated/painel'
     | '/_authenticated/veiculos'
     | '/_authenticated/vencimentos'
@@ -151,6 +182,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/motoristas': {
+      id: '/_authenticated/motoristas'
+      path: '/motoristas'
+      fullPath: '/motoristas'
+      preLoaderRoute: typeof AuthenticatedMotoristasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/manutencoes': {
+      id: '/_authenticated/manutencoes'
+      path: '/manutencoes'
+      fullPath: '/manutencoes'
+      preLoaderRoute: typeof AuthenticatedManutencoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/custos': {
       id: '/_authenticated/custos'
       path: '/custos'
@@ -163,6 +208,8 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCustosRoute: typeof AuthenticatedCustosRoute
+  AuthenticatedManutencoesRoute: typeof AuthenticatedManutencoesRoute
+  AuthenticatedMotoristasRoute: typeof AuthenticatedMotoristasRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedVeiculosRoute: typeof AuthenticatedVeiculosRoute
   AuthenticatedVencimentosRoute: typeof AuthenticatedVencimentosRoute
@@ -170,6 +217,8 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCustosRoute: AuthenticatedCustosRoute,
+  AuthenticatedManutencoesRoute: AuthenticatedManutencoesRoute,
+  AuthenticatedMotoristasRoute: AuthenticatedMotoristasRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedVeiculosRoute: AuthenticatedVeiculosRoute,
   AuthenticatedVencimentosRoute: AuthenticatedVencimentosRoute,
