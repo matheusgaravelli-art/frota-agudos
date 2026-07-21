@@ -8,7 +8,7 @@ import {
   formatBRL,
   formatData,
   tipoCustoLabel,
-  type Custo,
+  type TipoCusto,
 } from "@/lib/frota";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -131,10 +131,10 @@ function CustosPage() {
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <span className="font-semibold">{tipoCustoLabel[c.tipo]}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {formatData(c.data)}
+                        <span className="font-semibold">
+                          {tipoCustoLabel[c.tipo as TipoCusto] ?? c.tipo}
                         </span>
+                        <span className="text-xs text-muted-foreground">{formatData(c.data)}</span>
                       </div>
                       <div className="text-sm text-muted-foreground truncate">
                         {veiculoMap.get(c.veiculo_id) ?? "—"}
@@ -182,15 +182,15 @@ function CustoDialog({
   veiculos: { id: string; nome: string; placa: string }[];
 }) {
   const qc = useQueryClient();
-  const [tipo, setTipo] = useState<Custo["tipo"]>("combustivel");
+  const [tipo, setTipo] = useState<TipoCusto>("combustivel");
   const [veiculoId, setVeiculoId] = useState<string>("");
 
   const submit = useMutation({
     mutationFn: async (form: {
       veiculo_id: string;
-      tipo: Custo["tipo"];
+      tipo: TipoCusto;
       valor: number;
-      km: number | null;
+      km: number;
       data: string;
       descricao: string;
     }) => {
@@ -208,12 +208,11 @@ function CustoDialog({
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    const kmStr = String(fd.get("km") || "");
     submit.mutate({
       veiculo_id: veiculoId,
       tipo,
       valor: Number(fd.get("valor") || 0),
-      km: kmStr ? Number(kmStr) : null,
+      km: Number(fd.get("km") || 0),
       data: String(fd.get("data")),
       descricao: String(fd.get("descricao") || "").trim(),
     });
@@ -251,14 +250,16 @@ function CustoDialog({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Tipo</Label>
-            <Select value={tipo} onValueChange={(v) => setTipo(v as Custo["tipo"])}>
+            <Label>Categoria</Label>
+            <Select value={tipo} onValueChange={(v) => setTipo(v as TipoCusto)}>
               <SelectTrigger className="h-11">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="combustivel">Combustível</SelectItem>
                 <SelectItem value="manutencao">Manutenção</SelectItem>
+                <SelectItem value="seguro">Seguro</SelectItem>
+                <SelectItem value="imprevisto">Imprevisto</SelectItem>
                 <SelectItem value="outros">Outros</SelectItem>
               </SelectContent>
             </Select>
@@ -287,8 +288,8 @@ function CustoDialog({
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="km">KM do veículo (opcional)</Label>
-            <Input id="km" name="km" type="number" min="0" />
+            <Label htmlFor="km">KM do veículo</Label>
+            <Input id="km" name="km" type="number" min="0" required />
           </div>
           <div className="space-y-2">
             <Label htmlFor="descricao">Descrição (opcional)</Label>
