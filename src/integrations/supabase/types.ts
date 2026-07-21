@@ -93,35 +93,130 @@ export type Database = {
           },
         ]
       }
+      manutencoes: {
+        Row: {
+          created_at: string
+          custo_id: string | null
+          data: string
+          id: string
+          observacoes: string | null
+          oficina: string | null
+          peca_servico: string
+          updated_at: string
+          valor: number | null
+          veiculo_id: string
+        }
+        Insert: {
+          created_at?: string
+          custo_id?: string | null
+          data?: string
+          id?: string
+          observacoes?: string | null
+          oficina?: string | null
+          peca_servico: string
+          updated_at?: string
+          valor?: number | null
+          veiculo_id: string
+        }
+        Update: {
+          created_at?: string
+          custo_id?: string | null
+          data?: string
+          id?: string
+          observacoes?: string | null
+          oficina?: string | null
+          peca_servico?: string
+          updated_at?: string
+          valor?: number | null
+          veiculo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manutencoes_custo_id_fkey"
+            columns: ["custo_id"]
+            isOneToOne: false
+            referencedRelation: "custos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manutencoes_veiculo_id_fkey"
+            columns: ["veiculo_id"]
+            isOneToOne: false
+            referencedRelation: "veiculos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      motoristas: {
+        Row: {
+          contato: string | null
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          contato?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          contato?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       veiculos: {
         Row: {
           created_at: string
           id: string
           km_atual: number
+          marca_modelo: string | null
           motorista: string | null
+          motorista_id: string | null
           nome: string
           placa: string
+          status: string
           updated_at: string
         }
         Insert: {
           created_at?: string
           id?: string
           km_atual?: number
+          marca_modelo?: string | null
           motorista?: string | null
+          motorista_id?: string | null
           nome: string
           placa: string
+          status?: string
           updated_at?: string
         }
         Update: {
           created_at?: string
           id?: string
           km_atual?: number
+          marca_modelo?: string | null
           motorista?: string | null
+          motorista_id?: string | null
           nome?: string
           placa?: string
+          status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "veiculos_motorista_id_fkey"
+            columns: ["motorista_id"]
+            isOneToOne: false
+            referencedRelation: "motoristas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
