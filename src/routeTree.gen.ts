@@ -14,10 +14,13 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedVencimentosRouteImport } from './routes/_authenticated/vencimentos'
 import { Route as AuthenticatedVeiculosRouteImport } from './routes/_authenticated/veiculos'
+import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedMotoristasRouteImport } from './routes/_authenticated/motoristas'
 import { Route as AuthenticatedManutencoesRouteImport } from './routes/_authenticated/manutencoes'
 import { Route as AuthenticatedCustosRouteImport } from './routes/_authenticated/custos'
+import { Route as AuthenticatedBuscaRouteImport } from './routes/_authenticated/busca'
+import { Route as AuthenticatedAvisosRouteImport } from './routes/_authenticated/avisos'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -44,6 +47,11 @@ const AuthenticatedVeiculosRoute = AuthenticatedVeiculosRouteImport.update({
   path: '/veiculos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
+  id: '/relatorios',
+  path: '/relatorios',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
   id: '/painel',
   path: '/painel',
@@ -65,24 +73,40 @@ const AuthenticatedCustosRoute = AuthenticatedCustosRouteImport.update({
   path: '/custos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBuscaRoute = AuthenticatedBuscaRouteImport.update({
+  id: '/busca',
+  path: '/busca',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAvisosRoute = AuthenticatedAvisosRouteImport.update({
+  id: '/avisos',
+  path: '/avisos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/avisos': typeof AuthenticatedAvisosRoute
+  '/busca': typeof AuthenticatedBuscaRoute
   '/custos': typeof AuthenticatedCustosRoute
   '/manutencoes': typeof AuthenticatedManutencoesRoute
   '/motoristas': typeof AuthenticatedMotoristasRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/veiculos': typeof AuthenticatedVeiculosRoute
   '/vencimentos': typeof AuthenticatedVencimentosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/avisos': typeof AuthenticatedAvisosRoute
+  '/busca': typeof AuthenticatedBuscaRoute
   '/custos': typeof AuthenticatedCustosRoute
   '/manutencoes': typeof AuthenticatedManutencoesRoute
   '/motoristas': typeof AuthenticatedMotoristasRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/veiculos': typeof AuthenticatedVeiculosRoute
   '/vencimentos': typeof AuthenticatedVencimentosRoute
 }
@@ -91,10 +115,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/avisos': typeof AuthenticatedAvisosRoute
+  '/_authenticated/busca': typeof AuthenticatedBuscaRoute
   '/_authenticated/custos': typeof AuthenticatedCustosRoute
   '/_authenticated/manutencoes': typeof AuthenticatedManutencoesRoute
   '/_authenticated/motoristas': typeof AuthenticatedMotoristasRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
+  '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/veiculos': typeof AuthenticatedVeiculosRoute
   '/_authenticated/vencimentos': typeof AuthenticatedVencimentosRoute
 }
@@ -103,20 +130,26 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/avisos'
+    | '/busca'
     | '/custos'
     | '/manutencoes'
     | '/motoristas'
     | '/painel'
+    | '/relatorios'
     | '/veiculos'
     | '/vencimentos'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/avisos'
+    | '/busca'
     | '/custos'
     | '/manutencoes'
     | '/motoristas'
     | '/painel'
+    | '/relatorios'
     | '/veiculos'
     | '/vencimentos'
   id:
@@ -124,10 +157,13 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/avisos'
+    | '/_authenticated/busca'
     | '/_authenticated/custos'
     | '/_authenticated/manutencoes'
     | '/_authenticated/motoristas'
     | '/_authenticated/painel'
+    | '/_authenticated/relatorios'
     | '/_authenticated/veiculos'
     | '/_authenticated/vencimentos'
   fileRoutesById: FileRoutesById
@@ -175,6 +211,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedVeiculosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/relatorios': {
+      id: '/_authenticated/relatorios'
+      path: '/relatorios'
+      fullPath: '/relatorios'
+      preLoaderRoute: typeof AuthenticatedRelatoriosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/painel': {
       id: '/_authenticated/painel'
       path: '/painel'
@@ -203,23 +246,43 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCustosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/busca': {
+      id: '/_authenticated/busca'
+      path: '/busca'
+      fullPath: '/busca'
+      preLoaderRoute: typeof AuthenticatedBuscaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/avisos': {
+      id: '/_authenticated/avisos'
+      path: '/avisos'
+      fullPath: '/avisos'
+      preLoaderRoute: typeof AuthenticatedAvisosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAvisosRoute: typeof AuthenticatedAvisosRoute
+  AuthenticatedBuscaRoute: typeof AuthenticatedBuscaRoute
   AuthenticatedCustosRoute: typeof AuthenticatedCustosRoute
   AuthenticatedManutencoesRoute: typeof AuthenticatedManutencoesRoute
   AuthenticatedMotoristasRoute: typeof AuthenticatedMotoristasRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
+  AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedVeiculosRoute: typeof AuthenticatedVeiculosRoute
   AuthenticatedVencimentosRoute: typeof AuthenticatedVencimentosRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAvisosRoute: AuthenticatedAvisosRoute,
+  AuthenticatedBuscaRoute: AuthenticatedBuscaRoute,
   AuthenticatedCustosRoute: AuthenticatedCustosRoute,
   AuthenticatedManutencoesRoute: AuthenticatedManutencoesRoute,
   AuthenticatedMotoristasRoute: AuthenticatedMotoristasRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
+  AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedVeiculosRoute: AuthenticatedVeiculosRoute,
   AuthenticatedVencimentosRoute: AuthenticatedVencimentosRoute,
 }
