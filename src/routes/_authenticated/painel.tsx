@@ -9,9 +9,10 @@ import {
   statusVeiculoLabel,
 } from "@/lib/frota";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Truck, Wallet, Gauge, Wrench, CheckCircle2, PowerOff, CalendarClock } from "lucide-react";
+import { Truck, Wallet, Wrench, CheckCircle2, PowerOff, CalendarClock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VencimentosCalendar } from "@/components/vencimentos-calendar";
+
 
 export const Route = createFileRoute("/_authenticated/painel")({
   component: PainelPage,
