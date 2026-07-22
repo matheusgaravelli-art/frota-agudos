@@ -279,24 +279,52 @@ function ManutencaoDialog({
       qc.invalidateQueries({ queryKey: ["custos"] });
       onOpenChange(false);
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) =>
+      toast.error("Não foi possível salvar a manutenção", { description: e.message }),
   });
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    const peca = String(fd.get("peca_servico") || "").trim();
+    const data = String(fd.get("data") || "");
     const valorStr = String(fd.get("valor") || "");
     const kmStr = String(fd.get("km") || "");
+
+    if (!veiculoId) {
+      toast.error("Selecione o veículo antes de salvar.");
+      return;
+    }
+    if (!peca) {
+      toast.error("Informe a peça ou serviço realizado.");
+      return;
+    }
+    if (!data) {
+      toast.error("Informe a data da manutenção.");
+      return;
+    }
+    const valor = valorStr ? Number(valorStr) : null;
+    if (valorStr && (!Number.isFinite(valor!) || valor! < 0)) {
+      toast.error("Custo inválido. Use um número maior ou igual a zero.");
+      return;
+    }
+    const km = kmStr ? Number(kmStr) : null;
+    if (kmStr && (!Number.isFinite(km!) || km! < 0)) {
+      toast.error("KM inválido. Use um número maior ou igual a zero.");
+      return;
+    }
+
     submit.mutate({
       veiculo_id: veiculoId,
-      peca_servico: String(fd.get("peca_servico") || "").trim(),
-      data: String(fd.get("data")),
+      peca_servico: peca,
+      data,
       oficina: String(fd.get("oficina") || "").trim() || null,
       observacoes: String(fd.get("observacoes") || "").trim() || null,
-      valor: valorStr ? Number(valorStr) : null,
-      km: kmStr ? Number(kmStr) : null,
+      valor,
+      km,
     });
   };
+
 
   return (
     <Dialog
