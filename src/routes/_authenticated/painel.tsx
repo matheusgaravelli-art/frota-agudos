@@ -9,9 +9,10 @@ import {
   statusVeiculoLabel,
 } from "@/lib/frota";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Truck, Wallet, Gauge, Wrench, CheckCircle2, PowerOff, CalendarClock } from "lucide-react";
+import { Truck, Wallet, Wrench, CheckCircle2, PowerOff, CalendarClock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VencimentosCalendar } from "@/components/vencimentos-calendar";
+
 
 export const Route = createFileRoute("/_authenticated/painel")({
   component: PainelPage,
@@ -37,10 +38,6 @@ function PainelPage() {
     })
     .reduce((acc, c) => acc + Number(c.valor), 0);
 
-  const totalKm = lista.reduce((acc, v) => acc + (v.km_atual || 0), 0);
-  const totalCustoTudo = (custos.data ?? []).reduce((acc, c) => acc + Number(c.valor), 0);
-  const custoPorKm = totalKm > 0 ? totalCustoTudo / totalKm : 0;
-
   const veiculoMap = useMemo(() => {
     const m = new Map<string, string>();
     lista.forEach((v) => m.set(v.id, `${v.nome} (${v.placa})`));
@@ -61,10 +58,10 @@ function PainelPage() {
         <StatCard label={statusVeiculoLabel.desativado} value={String(desativados)} icon={PowerOff} tone="muted" />
       </div>
 
-      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+      <div>
         <StatCard label="Custo total do mês" value={formatBRL(custoMes)} icon={Wallet} />
-        <StatCard label="Custo médio por KM" value={formatBRL(custoPorKm)} icon={Gauge} />
       </div>
+
 
       <Card>
         <CardHeader className="pb-3">

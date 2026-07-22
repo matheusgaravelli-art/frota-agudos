@@ -202,21 +202,38 @@ function CustoDialog({
       qc.invalidateQueries({ queryKey: ["custos"] });
       onOpenChange(false);
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) =>
+      toast.error("Não foi possível salvar o custo", { description: e.message }),
   });
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    submit.mutate({
-      veiculo_id: veiculoId,
-      tipo,
-      valor: Number(fd.get("valor") || 0),
-      km: Number(fd.get("km") || 0),
-      data: String(fd.get("data")),
-      descricao: String(fd.get("descricao") || "").trim(),
-    });
+    const valor = Number(fd.get("valor"));
+    const km = Number(fd.get("km"));
+    const data = String(fd.get("data") || "");
+    const descricao = String(fd.get("descricao") || "").trim();
+
+    if (!veiculoId) {
+      toast.error("Selecione o veículo antes de salvar.");
+      return;
+    }
+    if (!data) {
+      toast.error("Informe a data do custo.");
+      return;
+    }
+    if (!Number.isFinite(valor) || valor <= 0) {
+      toast.error("Informe um valor válido (maior que zero).");
+      return;
+    }
+    if (!Number.isFinite(km) || km < 0) {
+      toast.error("Informe a quilometragem atual do veículo.");
+      return;
+    }
+
+    submit.mutate({ veiculo_id: veiculoId, tipo, valor, km, data, descricao });
   };
+
 
   return (
     <Dialog
