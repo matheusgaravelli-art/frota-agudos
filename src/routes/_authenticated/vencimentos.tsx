@@ -390,19 +390,30 @@ function VencimentoDialog({
       qc.invalidateQueries({ queryKey: ["documentos"] });
       onOpenChange(false);
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) =>
+      toast.error("Não foi possível salvar o vencimento", { description: e.message }),
   });
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    const vencimento = String(fd.get("vencimento") || "");
+    if (!veiculoId) {
+      toast.error("Selecione o veículo antes de salvar.");
+      return;
+    }
+    if (!vencimento) {
+      toast.error("Informe a data de vencimento.");
+      return;
+    }
     submit.mutate({
       veiculo_id: veiculoId,
       tipo,
-      vencimento: String(fd.get("vencimento")),
+      vencimento,
       observacao: String(fd.get("observacao") || "").trim(),
     });
   };
+
 
   return (
     <Dialog
