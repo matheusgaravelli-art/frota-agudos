@@ -24,5 +24,5 @@ export async function getFotoUrls(paths: string[]) {
     .from(FOTOS_BUCKET)
     .createSignedUrls(paths, 60 * 60);
   if (error) throw error;
-  return (data ?? []).map((d) => d.signedUrl);
+  return (data ?? []).map((d) => d.signedUrl ?? "");
 }
