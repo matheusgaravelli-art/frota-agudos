@@ -1,15 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   listVeiculos,
-  listMotoristas,
   statusVeiculoLabel,
   statusVeiculoTone,
+  veiculoLabel,
   type Veiculo,
   type StatusVeiculo,
 } from "@/lib/frota";
+import { MAX_FOTOS, getFotoUrls, removeFoto, uploadFoto } from "@/lib/veiculo-fotos";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,15 +27,43 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Upload, Camera, X, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/veiculos")({
   component: VeiculosPage,
+  head: () => ({
+    meta: [
+      { title: "Veículos da frota | Gestão de Frota" },
+      {
+        name: "description",
+        content:
+          "Cadastro de veículos da frota com tipo, cor, departamento, placa, status e fotos do veículo.",
+      },
+      { property: "og:title", content: "Veículos da frota | Gestão de Frota" },
+      {
+        property: "og:description",
+        content: "Cadastre e organize os veículos da frota com fotos e importação por planilha.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
 });
+
+const STATUS_MAP: Record<string, StatusVeiculo> = {
+  ativo: "ativo",
+  "em manutencao": "manutencao",
+  "em manutenção": "manutencao",
+  manutencao: "manutencao",
+  manutenção: "manutencao",
+  desativado: "desativado",
+  inativo: "desativado",
+};
 
 function VeiculosPage() {
   const qc = useQueryClient();
@@ -42,32 +71,19 @@ function VeiculosPage() {
     queryKey: ["veiculos"],
     queryFn: listVeiculos,
   });
-  const { data: motoristas = [] } = useQuery({
-    queryKey: ["motoristas"],
-    queryFn: listMotoristas,
-  });
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<"todos" | StatusVeiculo>("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState<Veiculo | null>(null);
-
-  const motoristaMap = useMemo(() => {
-    const m = new Map<string, string>();
-    motoristas.forEach((mo) => m.set(mo.id, mo.nome));
-    return m;
-  }, [motoristas]);
 
   const filtered = veiculos.filter((v) => {
     if (filtroStatus !== "todos" && v.status !== filtroStatus) return false;
     const q = busca.toLowerCase().trim();
     if (!q) return true;
-    const nomeMot = v.motorista_id ? motoristaMap.get(v.motorista_id) ?? "" : v.motorista ?? "";
-    return (
-      v.placa.toLowerCase().includes(q) ||
-      v.nome.toLowerCase().includes(q) ||
-      (v.marca_modelo ?? "").toLowerCase().includes(q) ||
-      nomeMot.toLowerCase().includes(q)
-    );
+    return [v.codigo, v.nome, v.placa, v.tipo, v.cor, v.departamento, v.marca_modelo]
+      .filter(Boolean)
+      .some((campo) => String(campo).toLowerCase().includes(q));
   });
 
   const deleteMut = useMutation({
@@ -101,23 +117,31 @@ function VeiculosPage() {
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Veículos</h1>
           <p className="text-sm text-muted-foreground mt-1">{veiculos.length} cadastrado(s)</p>
         </div>
-        <Button size="lg" onClick={openNew} className="gap-2">
-          <Plus className="h-4 w-4" /> Novo veículo
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button size="lg" variant="outline" onClick={() => setImportOpen(true)} className="gap-2">
+            <Upload className="h-4 w-4" /> Importar planilha
+          </Button>
+          <Button size="lg" onClick={openNew} className="gap-2">
+            <Plus className="h-4 w-4" /> Novo veículo
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[220px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por placa, nome, marca ou motorista..."
+            placeholder="Buscar por ID, placa, tipo, cor ou departamento..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             className="pl-9 h-11"
           />
         </div>
-        <Select value={filtroStatus} onValueChange={(v) => setFiltroStatus(v as typeof filtroStatus)}>
-          <SelectTrigger className="h-11 w-[190px]">
+        <Select
+          value={filtroStatus}
+          onValueChange={(v) => setFiltroStatus(v as typeof filtroStatus)}
+        >
+          <SelectTrigger className="h-11 w-full sm:w-[190px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -143,15 +167,14 @@ function VeiculosPage() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((v) => {
             const st = (v.status ?? "ativo") as StatusVeiculo;
-            const motoristaNome = v.motorista_id
-              ? motoristaMap.get(v.motorista_id) ?? "—"
-              : v.motorista || "—";
             return (
               <Card key={v.id}>
                 <CardContent className="pt-5 space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <div className="font-semibold text-lg leading-tight truncate">{v.nome}</div>
+                      <div className="font-semibold text-lg leading-tight truncate">
+                        {veiculoLabel(v)}
+                      </div>
                       <div className="text-sm font-mono text-muted-foreground uppercase">
                         {v.placa}
                       </div>
@@ -166,18 +189,29 @@ function VeiculosPage() {
                     </span>
                   </div>
                   <div className="text-sm space-y-1">
-                    {v.marca_modelo && (
+                    {v.tipo && (
                       <div>
-                        <span className="text-muted-foreground">Marca/Modelo:</span>{" "}
-                        {v.marca_modelo}
+                        <span className="text-muted-foreground">Tipo:</span> {v.tipo}
                       </div>
                     )}
-                    <div>
-                      <span className="text-muted-foreground">Motorista:</span> {motoristaNome}
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">KM atual:</span>{" "}
-                      {v.km_atual.toLocaleString("pt-BR")}
+                    {v.marca_modelo && (
+                      <div>
+                        <span className="text-muted-foreground">Marca/Modelo:</span> {v.marca_modelo}
+                      </div>
+                    )}
+                    {v.cor && (
+                      <div>
+                        <span className="text-muted-foreground">Cor:</span> {v.cor}
+                      </div>
+                    )}
+                    {v.departamento && (
+                      <div>
+                        <span className="text-muted-foreground">Dep.:</span> {v.departamento}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <ImageIcon className="h-3.5 w-3.5" />
+                      {(v.fotos ?? []).length}/{MAX_FOTOS} foto(s)
                     </div>
                   </div>
                   <div className="flex gap-2 pt-2">
@@ -185,19 +219,19 @@ function VeiculosPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => openEdit(v)}
-                      className="flex-1 gap-1"
+                      className="flex-1 gap-1 h-10"
                     >
-                      <Pencil className="h-3.5 w-3.5" /> Editar
+                      <Pencil className="h-3.5 w-3.5" /> Abrir
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        if (confirm(`Excluir ${v.nome} (${v.placa})?`)) {
+                        if (confirm(`Excluir ${veiculoLabel(v)} (${v.placa})?`)) {
                           deleteMut.mutate(v.id);
                         }
                       }}
-                      className="gap-1 text-destructive hover:text-destructive"
+                      className="gap-1 h-10 text-destructive hover:text-destructive"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -209,12 +243,8 @@ function VeiculosPage() {
         </div>
       )}
 
-      <VeiculoDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        editing={editing}
-        motoristas={motoristas}
-      />
+      <VeiculoDialog open={dialogOpen} onOpenChange={setDialogOpen} editing={editing} />
+      <ImportarDialog open={importOpen} onOpenChange={setImportOpen} />
     </div>
   );
 }
@@ -223,31 +253,101 @@ function VeiculoDialog({
   open,
   onOpenChange,
   editing,
-  motoristas,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   editing: Veiculo | null;
-  motoristas: { id: string; nome: string }[];
 }) {
   const qc = useQueryClient();
   const [status, setStatus] = useState<StatusVeiculo>(editing?.status ?? "ativo");
-  const [motoristaId, setMotoristaId] = useState<string>(editing?.motorista_id ?? "sem");
+  const [fotos, setFotos] = useState<string[]>(editing?.fotos ?? []);
+  const [urls, setUrls] = useState<string[]>([]);
+  const [enviando, setEnviando] = useState(false);
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const galeriaRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setStatus(editing?.status ?? "ativo");
+    setFotos(editing?.fotos ?? []);
+  }, [open, editing]);
+
+  useEffect(() => {
+    let ativo = true;
+    getFotoUrls(fotos)
+      .then((u) => ativo && setUrls(u))
+      .catch(() => ativo && setUrls([]));
+    return () => {
+      ativo = false;
+    };
+  }, [fotos]);
+
+  const salvarFotos = async (novas: string[]) => {
+    setFotos(novas);
+    if (editing) {
+      const { error } = await supabase
+        .from("veiculos")
+        .update({ fotos: novas })
+        .eq("id", editing.id);
+      if (error) throw error;
+      qc.invalidateQueries({ queryKey: ["veiculos"] });
+    }
+  };
+
+  const handleFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    if (!editing) {
+      toast.error("Salve o veículo primeiro para anexar as fotos.");
+      return;
+    }
+    const espaco = MAX_FOTOS - fotos.length;
+    if (espaco <= 0) {
+      toast.error(`Você pode anexar no máximo ${MAX_FOTOS} fotos por veículo.`);
+      return;
+    }
+    setEnviando(true);
+    try {
+      const escolhidas = Array.from(files).slice(0, espaco);
+      const paths: string[] = [];
+      for (const f of escolhidas) {
+        paths.push(await uploadFoto(editing.id, f));
+      }
+      await salvarFotos([...fotos, ...paths]);
+      toast.success("Foto adicionada");
+    } catch (e) {
+      toast.error(`Não foi possível enviar a foto: ${(e as Error).message}`);
+    } finally {
+      setEnviando(false);
+      if (cameraRef.current) cameraRef.current.value = "";
+      if (galeriaRef.current) galeriaRef.current.value = "";
+    }
+  };
+
+  const excluirFoto = async (path: string) => {
+    try {
+      await removeFoto(path);
+      await salvarFotos(fotos.filter((p) => p !== path));
+      toast.success("Foto removida");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
 
   const submit = useMutation({
     mutationFn: async (form: {
-      nome: string;
-      placa: string;
+      codigo: string;
+      tipo: string | null;
+      cor: string | null;
       marca_modelo: string | null;
-      motorista_id: string | null;
-      km_atual: number;
+      departamento: string | null;
+      placa: string;
       status: StatusVeiculo;
     }) => {
       if (editing) {
         const { error } = await supabase.from("veiculos").update(form).eq("id", editing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("veiculos").insert(form);
+        const { error } = await supabase.from("veiculos").insert({ ...form, fotos: [] });
         if (error) throw error;
       }
     },
@@ -256,44 +356,57 @@ function VeiculoDialog({
       qc.invalidateQueries({ queryKey: ["veiculos"] });
       onOpenChange(false);
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(`Não foi possível salvar: ${e.message}`),
   });
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    const marca = String(fd.get("marca_modelo") || "").trim();
+    const codigo = String(fd.get("codigo") || "").trim();
+    const placa = String(fd.get("placa") || "")
+      .trim()
+      .toUpperCase();
+    if (!codigo) {
+      toast.error("Informe o ID do veículo.");
+      return;
+    }
+    if (!placa) {
+      toast.error("Informe a placa do veículo.");
+      return;
+    }
+    const texto = (k: string) => {
+      const v = String(fd.get(k) || "").trim();
+      return v || null;
+    };
     submit.mutate({
-      nome: String(fd.get("nome") || "").trim(),
-      placa: String(fd.get("placa") || "").trim().toUpperCase(),
-      marca_modelo: marca || null,
-      motorista_id: motoristaId === "sem" ? null : motoristaId,
-      km_atual: Number(fd.get("km_atual") || 0),
+      codigo,
+      placa,
+      tipo: texto("tipo"),
+      cor: texto("cor"),
+      marca_modelo: texto("marca_modelo"),
+      departamento: texto("departamento"),
       status,
     });
   };
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        if (v) {
-          setStatus(editing?.status ?? "ativo");
-          setMotoristaId(editing?.motorista_id ?? "sem");
-        }
-        onOpenChange(v);
-      }}
-    >
-      <DialogContent>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{editing ? "Editar veículo" : "Novo veículo"}</DialogTitle>
+          <DialogTitle>{editing ? "Veículo" : "Novo veículo"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4" key={editing?.id ?? "new"}>
-          <div className="space-y-2">
-            <Label htmlFor="nome">Nome / Identificação</Label>
-            <Input id="nome" name="nome" required defaultValue={editing?.nome ?? ""} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="codigo">ID Veículo</Label>
+              <Input
+                id="codigo"
+                name="codigo"
+                required
+                className="h-11"
+                defaultValue={editing?.codigo ?? editing?.nome ?? ""}
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="placa">Placa</Label>
               <Input
@@ -301,50 +414,42 @@ function VeiculoDialog({
                 name="placa"
                 required
                 defaultValue={editing?.placa ?? ""}
-                className="uppercase font-mono"
+                className="uppercase font-mono h-11"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="km_atual">KM atual</Label>
+              <Label htmlFor="tipo">Tipo</Label>
               <Input
-                id="km_atual"
-                name="km_atual"
-                type="number"
-                min={0}
-                required
-                defaultValue={editing?.km_atual ?? 0}
+                id="tipo"
+                name="tipo"
+                placeholder="Ex.: Carro, Caminhão, Ônibus..."
+                className="h-11"
+                defaultValue={editing?.tipo ?? ""}
               />
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="marca_modelo">Marca / Modelo</Label>
-            <Input
-              id="marca_modelo"
-              name="marca_modelo"
-              placeholder="Ex.: Fiat Strada, VW Gol..."
-              defaultValue={editing?.marca_modelo ?? ""}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Motorista responsável</Label>
-            <Select value={motoristaId} onValueChange={setMotoristaId}>
-              <SelectTrigger className="h-11">
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="sem">Sem motorista</SelectItem>
-                {motoristas.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>
-                    {m.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {motoristas.length === 0 && (
-              <p className="text-xs text-muted-foreground">
-                Cadastre motoristas na aba "Motoristas" para vincular.
-              </p>
-            )}
+            <div className="space-y-2">
+              <Label htmlFor="cor">Cor</Label>
+              <Input id="cor" name="cor" className="h-11" defaultValue={editing?.cor ?? ""} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="marca_modelo">Marca / Modelo</Label>
+              <Input
+                id="marca_modelo"
+                name="marca_modelo"
+                placeholder="Ex.: Fiat Strada"
+                className="h-11"
+                defaultValue={editing?.marca_modelo ?? ""}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="departamento">Dep. (secretaria responsável)</Label>
+              <Input
+                id="departamento"
+                name="departamento"
+                className="h-11"
+                defaultValue={editing?.departamento ?? ""}
+              />
+            </div>
           </div>
           <div className="space-y-2">
             <Label>Status</Label>
@@ -359,15 +464,227 @@ function VeiculoDialog({
               </SelectContent>
             </Select>
           </div>
-          <DialogFooter>
+
+          <div className="space-y-2 border-t pt-4">
+            <Label>
+              Fotos do veículo ({fotos.length}/{MAX_FOTOS})
+            </Label>
+            {!editing ? (
+              <p className="text-xs text-muted-foreground">
+                Salve o veículo para poder anexar as fotos.
+              </p>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  {fotos.map((path, i) => (
+                    <div key={path} className="relative rounded-md overflow-hidden border">
+                      {urls[i] ? (
+                        <img
+                          src={urls[i]}
+                          alt={`Foto ${i + 1} do veículo ${veiculoLabel(editing)}`}
+                          className="w-full h-32 object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-32 bg-muted" />
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => excluirFoto(path)}
+                        aria-label="Remover foto"
+                        className="absolute top-1 right-1 rounded-full bg-background/90 border p-1"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                {fotos.length < MAX_FOTOS && (
+                  <div className="flex flex-wrap gap-2">
+                    <input
+                      ref={cameraRef}
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={(e) => handleFiles(e.target.files)}
+                    />
+                    <input
+                      ref={galeriaRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => handleFiles(e.target.files)}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="gap-2 h-11 flex-1"
+                      disabled={enviando}
+                      onClick={() => cameraRef.current?.click()}
+                    >
+                      <Camera className="h-4 w-4" /> Tirar foto
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="gap-2 h-11 flex-1"
+                      disabled={enviando}
+                      onClick={() => galeriaRef.current?.click()}
+                    >
+                      <ImageIcon className="h-4 w-4" /> Escolher arquivo
+                    </Button>
+                  </div>
+                )}
+                {enviando && <p className="text-xs text-muted-foreground">Enviando foto...</p>}
+              </>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
+              Fechar
             </Button>
             <Button type="submit" disabled={submit.isPending}>
               {submit.isPending ? "Salvando..." : "Salvar"}
             </Button>
           </DialogFooter>
         </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ImportarDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
+  const qc = useQueryClient();
+  const [processando, setProcessando] = useState(false);
+  const [limpar, setLimpar] = useState(true);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const pick = (row: Record<string, unknown>, chaves: string[]) => {
+    for (const k of Object.keys(row)) {
+      const norm = k
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z]/g, "");
+      if (chaves.includes(norm)) {
+        const v = row[k];
+        if (v === null || v === undefined) return "";
+        return String(v).trim();
+      }
+    }
+    return "";
+  };
+
+  const importar = async (file: File) => {
+    setProcessando(true);
+    try {
+      const XLSX = await import("xlsx");
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
+
+      const registros = rows
+        .map((r) => {
+          const codigo = pick(r, ["idveiculo", "id", "codigo", "veiculo"]);
+          const placa = pick(r, ["placa"]).toUpperCase();
+          const statusTxt = pick(r, ["status"]).toLowerCase();
+          return {
+            codigo: codigo || null,
+            nome: codigo || null,
+            tipo: pick(r, ["tipo"]) || null,
+            cor: pick(r, ["cor"]) || null,
+            departamento: pick(r, ["dep", "departamento", "secretaria"]) || null,
+            placa,
+            status: STATUS_MAP[statusTxt] ?? "ativo",
+            fotos: [] as string[],
+          };
+        })
+        .filter((r) => r.codigo || r.placa);
+
+      if (registros.length === 0) {
+        toast.error(
+          "Nenhuma linha válida encontrada. Verifique se a planilha tem as colunas: ID Veículo, Tipo, Cor, Dep., Placa, Status.",
+        );
+        return;
+      }
+
+      if (limpar) {
+        const { error: delErr } = await supabase
+          .from("veiculos")
+          .delete()
+          .not("id", "is", null);
+        if (delErr) throw delErr;
+      }
+
+      for (let i = 0; i < registros.length; i += 200) {
+        const { error } = await supabase.from("veiculos").insert(registros.slice(i, i + 200));
+        if (error) throw error;
+      }
+
+      qc.invalidateQueries({ queryKey: ["veiculos"] });
+      toast.success(`${registros.length} veículo(s) importado(s) com sucesso.`);
+      onOpenChange(false);
+    } catch (e) {
+      toast.error(`Não foi possível importar: ${(e as Error).message}`);
+    } finally {
+      setProcessando(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Importar veículos por planilha</DialogTitle>
+          <DialogDescription>
+            A planilha (Excel ou CSV) deve ter as colunas: ID Veículo, Tipo, Cor, Dep., Placa,
+            Status. Cada linha vira um veículo.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <label className="flex items-start gap-3 text-sm">
+            <input
+              type="checkbox"
+              checked={limpar}
+              onChange={(e) => setLimpar(e.target.checked)}
+              className="mt-1 h-4 w-4"
+            />
+            <span>
+              Substituir a lista atual de veículos (apaga os veículos cadastrados antes de
+              importar). Custos, manutenções e vencimentos ligados a eles também são removidos.
+            </span>
+          </label>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) importar(f);
+            }}
+          />
+          <Button
+            type="button"
+            className="w-full h-12 gap-2"
+            disabled={processando}
+            onClick={() => fileRef.current?.click()}
+          >
+            <Upload className="h-4 w-4" />
+            {processando ? "Importando..." : "Escolher planilha e importar"}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
