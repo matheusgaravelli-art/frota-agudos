@@ -4,16 +4,26 @@ export type StatusVeiculo = "ativo" | "manutencao" | "desativado";
 
 export type Veiculo = {
   id: string;
-  nome: string;
+  nome: string | null;
+  codigo: string | null;
+  tipo: string | null;
+  cor: string | null;
+  departamento: string | null;
   placa: string;
   marca_modelo: string | null;
   motorista: string | null;
   motorista_id: string | null;
   km_atual: number;
   status: StatusVeiculo;
+  fotos: string[];
   created_at: string;
   updated_at: string;
 };
+
+export function veiculoLabel(v: { codigo?: string | null; nome?: string | null; placa?: string }) {
+  return v.codigo || v.nome || v.placa || "Veículo";
+}
+
 
 export type TipoCusto = "combustivel" | "manutencao" | "seguro" | "imprevisto" | "outros";
 
