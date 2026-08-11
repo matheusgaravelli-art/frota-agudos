@@ -9,6 +9,7 @@ import {
   formatData,
   statusVeiculoLabel,
   type StatusVeiculo,
+  veiculoLabel,
 } from "@/lib/frota";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, Truck, User, Wrench } from "lucide-react";
@@ -32,7 +33,7 @@ function BuscaPage() {
     if (!term) return [];
     return (veiculos.data ?? []).filter(
       (v) =>
-        v.nome.toLowerCase().includes(term) ||
+        (v.nome ?? "").toLowerCase().includes(term) ||
         v.placa.toLowerCase().includes(term) ||
         (v.marca_modelo ?? "").toLowerCase().includes(term),
     );
@@ -47,7 +48,7 @@ function BuscaPage() {
 
   const veiculoMap = useMemo(() => {
     const m = new Map<string, string>();
-    (veiculos.data ?? []).forEach((v) => m.set(v.id, `${v.nome} (${v.placa})`));
+    (veiculos.data ?? []).forEach((v) => m.set(v.id, `${veiculoLabel(v)} (${v.placa})`));
     return m;
   }, [veiculos.data]);
 
@@ -86,7 +87,7 @@ function BuscaPage() {
             {veicMatch.map((v) => (
               <Link key={v.id} to="/veiculos" className="flex items-center justify-between py-2.5 hover:bg-muted/50 rounded-md px-2 -mx-2">
                 <div className="min-w-0">
-                  <div className="font-medium truncate">{v.nome} <span className="font-mono text-xs text-muted-foreground">{v.placa}</span></div>
+                  <div className="font-medium truncate">{veiculoLabel(v)} <span className="font-mono text-xs text-muted-foreground">{v.placa}</span></div>
                   <div className="text-xs text-muted-foreground truncate">{v.marca_modelo ?? "—"}</div>
                 </div>
                 <span className="text-xs text-muted-foreground shrink-0">{statusVeiculoLabel[(v.status ?? "ativo") as StatusVeiculo]}</span>

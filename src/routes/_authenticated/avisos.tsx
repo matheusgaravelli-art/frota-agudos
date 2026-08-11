@@ -9,6 +9,7 @@ import {
   diasAteVencimento,
   tipoDocLabel,
   type TipoDocumento,
+  veiculoLabel,
 } from "@/lib/frota";
 import { Card, CardContent } from "@/components/ui/card";
 import { Bell } from "lucide-react";
@@ -30,7 +31,7 @@ function AvisosPage() {
 
   const veiculoMap = useMemo(() => {
     const m = new Map<string, string>();
-    (veiculos.data ?? []).forEach((v) => m.set(v.id, `${v.nome} (${v.placa})`));
+    (veiculos.data ?? []).forEach((v) => m.set(v.id, `${veiculoLabel(v)} (${v.placa})`));
     return m;
   }, [veiculos.data]);
 

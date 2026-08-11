@@ -8,6 +8,7 @@ import {
   formatBRL,
   formatData,
   type Manutencao,
+  veiculoLabel,
 } from "@/lib/frota";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,7 +47,7 @@ function ManutencoesPage() {
 
   const veiculoMap = useMemo(() => {
     const m = new Map<string, string>();
-    (veiculos.data ?? []).forEach((v) => m.set(v.id, `${v.nome} (${v.placa})`));
+    (veiculos.data ?? []).forEach((v) => m.set(v.id, `${veiculoLabel(v)} (${v.placa})`));
     return m;
   }, [veiculos.data]);
 
@@ -115,7 +116,7 @@ function ManutencoesPage() {
                 <SelectItem value="todos">Todos os veículos</SelectItem>
                 {(veiculos.data ?? []).map((v) => (
                   <SelectItem key={v.id} value={v.id}>
-                    {v.nome} ({v.placa})
+                    {veiculoLabel(v)} ({v.placa})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -215,7 +216,7 @@ function ManutencaoDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
   editing: Manutencao | null;
-  veiculos: { id: string; nome: string; placa: string }[];
+  veiculos: { id: string; nome: string | null; codigo?: string | null; placa: string }[];
   lancarCustoDefault: boolean;
 }) {
   const qc = useQueryClient();
@@ -351,7 +352,7 @@ function ManutencaoDialog({
               <SelectContent>
                 {veiculos.map((v) => (
                   <SelectItem key={v.id} value={v.id}>
-                    {v.nome} ({v.placa})
+                    {veiculoLabel(v)} ({v.placa})
                   </SelectItem>
                 ))}
               </SelectContent>
