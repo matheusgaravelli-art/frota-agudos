@@ -10,7 +10,8 @@ import {
   diasAteVencimento,
   tipoDocLabel,
   type Documento,
-  type TipoDocumento,
+  type TipoDocumento,,
+  veiculoLabel,
 } from "@/lib/frota";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,7 +70,7 @@ function VencimentosPage() {
 
   const veiculoMap = useMemo(() => {
     const m = new Map<string, string>();
-    (veiculos.data ?? []).forEach((v) => m.set(v.id, `${v.nome} (${v.placa})`));
+    (veiculos.data ?? []).forEach((v) => m.set(v.id, `${veiculoLabel(v)} (${v.placa})`));
     return m;
   }, [veiculos.data]);
 
@@ -359,7 +360,7 @@ function VencimentoDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
   editing: Documento | null;
-  veiculos: { id: string; nome: string; placa: string }[];
+  veiculos: { id: string; nome: string | null; codigo?: string | null; placa: string }[];
 }) {
   const qc = useQueryClient();
   const initialTipo: TipoDocumento =
@@ -440,7 +441,7 @@ function VencimentoDialog({
               <SelectContent>
                 {veiculos.map((v) => (
                   <SelectItem key={v.id} value={v.id}>
-                    {v.nome} ({v.placa})
+                    {veiculoLabel(v)} ({v.placa})
                   </SelectItem>
                 ))}
               </SelectContent>

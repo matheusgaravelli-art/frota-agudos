@@ -8,7 +8,8 @@ import {
   formatBRL,
   formatData,
   tipoCustoLabel,
-  type TipoCusto,
+  type TipoCusto,,
+  veiculoLabel,
 } from "@/lib/frota";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,7 +45,7 @@ function CustosPage() {
 
   const veiculoMap = useMemo(() => {
     const m = new Map<string, string>();
-    (veiculos.data ?? []).forEach((v) => m.set(v.id, `${v.nome} (${v.placa})`));
+    (veiculos.data ?? []).forEach((v) => m.set(v.id, `${veiculoLabel(v)} (${v.placa})`));
     return m;
   }, [veiculos.data]);
 
@@ -108,7 +109,7 @@ function CustosPage() {
                 <SelectItem value="todos">Todos os veículos</SelectItem>
                 {(veiculos.data ?? []).map((v) => (
                   <SelectItem key={v.id} value={v.id}>
-                    {v.nome} ({v.placa})
+                    {veiculoLabel(v)} ({v.placa})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -179,7 +180,7 @@ function CustoDialog({
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  veiculos: { id: string; nome: string; placa: string }[];
+  veiculos: { id: string; nome: string | null; codigo?: string | null; placa: string }[];
 }) {
   const qc = useQueryClient();
   const [tipo, setTipo] = useState<TipoCusto>("combustivel");
@@ -260,7 +261,7 @@ function CustoDialog({
               <SelectContent>
                 {veiculos.map((v) => (
                   <SelectItem key={v.id} value={v.id}>
-                    {v.nome} ({v.placa})
+                    {veiculoLabel(v)} ({v.placa})
                   </SelectItem>
                 ))}
               </SelectContent>

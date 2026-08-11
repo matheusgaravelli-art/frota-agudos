@@ -8,7 +8,8 @@ import {
   formatBRL,
   formatData,
   tipoCustoLabel,
-  type TipoCusto,
+  type TipoCusto,,
+  veiculoLabel,
 } from "@/lib/frota";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,7 +45,7 @@ function RelatoriosPage() {
 
   const veiculoLabel = useMemo(() => {
     const m = new Map<string, string>();
-    (veiculos.data ?? []).forEach((v) => m.set(v.id, `${v.nome} (${v.placa})`));
+    (veiculos.data ?? []).forEach((v) => m.set(v.id, `${veiculoLabel(v)} (${v.placa})`));
     return m;
   }, [veiculos.data]);
 
@@ -578,7 +579,7 @@ function RelatoriosPage() {
               <SelectContent>
                 <SelectItem value="todos">Todos</SelectItem>
                 {(veiculos.data ?? []).map((v) => (
-                  <SelectItem key={v.id} value={v.id}>{v.nome} ({v.placa})</SelectItem>
+                  <SelectItem key={v.id} value={v.id}>{veiculoLabel(v)} ({v.placa})</SelectItem>
                 ))}
               </SelectContent>
             </Select>

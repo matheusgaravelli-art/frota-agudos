@@ -6,7 +6,8 @@ import {
   listCustos,
   listDocumentos,
   formatBRL,
-  statusVeiculoLabel,
+  statusVeiculoLabel,,
+  veiculoLabel,
 } from "@/lib/frota";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Truck, Wallet, Wrench, CheckCircle2, PowerOff, CalendarClock } from "lucide-react";
@@ -40,7 +41,7 @@ function PainelPage() {
 
   const veiculoMap = useMemo(() => {
     const m = new Map<string, string>();
-    lista.forEach((v) => m.set(v.id, `${v.nome} (${v.placa})`));
+    lista.forEach((v) => m.set(v.id, `${veiculoLabel(v)} (${v.placa})`));
     return m;
   }, [lista]);
 
