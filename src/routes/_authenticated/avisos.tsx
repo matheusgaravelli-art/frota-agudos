@@ -8,7 +8,7 @@ import {
   statusVencimento,
   diasAteVencimento,
   tipoDocLabel,
-  type TipoDocumento,,
+  type TipoDocumento,
   veiculoLabel,
 } from "@/lib/frota";
 import { Card, CardContent } from "@/components/ui/card";

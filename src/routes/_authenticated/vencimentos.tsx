@@ -10,7 +10,7 @@ import {
   diasAteVencimento,
   tipoDocLabel,
   type Documento,
-  type TipoDocumento,,
+  type TipoDocumento,
   veiculoLabel,
 } from "@/lib/frota";
 import { Button } from "@/components/ui/button";

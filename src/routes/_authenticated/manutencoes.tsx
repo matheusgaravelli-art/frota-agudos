@@ -7,7 +7,7 @@ import {
   listVeiculos,
   formatBRL,
   formatData,
-  type Manutencao,,
+  type Manutencao,
   veiculoLabel,
 } from "@/lib/frota";
 import { Button } from "@/components/ui/button";

@@ -8,7 +8,7 @@ import {
   listManutencoes,
   formatData,
   statusVeiculoLabel,
-  type StatusVeiculo,,
+  type StatusVeiculo,
   veiculoLabel,
 } from "@/lib/frota";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
