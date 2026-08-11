@@ -43,7 +43,7 @@ function RelatoriosPage() {
   const [ano, setAno] = useState<string>(String(hoje.getFullYear()));
   const [veiculoId, setVeiculoId] = useState<string>("todos");
 
-  const veiculoLabel = useMemo(() => {
+  const veiculoNomeMap = useMemo(() => {
     const m = new Map<string, string>();
     (veiculos.data ?? []).forEach((v) => m.set(v.id, `${veiculoLabel(v)} (${v.placa})`));
     return m;
@@ -71,7 +71,7 @@ function RelatoriosPage() {
   const periodoLabel =
     mes === "todos" ? `Ano de ${ano}` : `${MESES_PT[Number(mes) - 1]} de ${ano}`;
   const veicLabel =
-    veiculoId === "todos" ? "Todos os veículos" : veiculoLabel.get(veiculoId) ?? "—";
+    veiculoId === "todos" ? "Todos os veículos" : veiculoNomeMap.get(veiculoId) ?? "—";
 
   // Subtotais por categoria (para o PDF)
   const subtotaisCategoria = useMemo(() => {
@@ -194,7 +194,7 @@ function RelatoriosPage() {
           custosFiltrados.length > 0
             ? custosFiltrados.map((c) => [
                 formatData(c.data),
-                veiculoLabel.get(c.veiculo_id) ?? "—",
+                veiculoNomeMap.get(c.veiculo_id) ?? "—",
                 tipoCustoLabel[c.tipo as TipoCusto] ?? c.tipo,
                 c.km != null ? c.km.toLocaleString("pt-BR") : "—",
                 formatBRL(Number(c.valor)),
@@ -238,7 +238,7 @@ function RelatoriosPage() {
           manutFiltradas.length > 0
             ? manutFiltradas.map((m) => [
                 formatData(m.data),
-                veiculoLabel.get(m.veiculo_id) ?? "—",
+                veiculoNomeMap.get(m.veiculo_id) ?? "—",
                 m.peca_servico,
                 m.oficina ?? "—",
                 m.valor != null ? formatBRL(Number(m.valor)) : "—",
@@ -396,7 +396,7 @@ function RelatoriosPage() {
         const [y, m, d] = c.data.split("-").map(Number);
         wsC.addRow({
           data: new Date(y, m - 1, d),
-          veiculo: veiculoLabel.get(c.veiculo_id) ?? "—",
+          veiculo: veiculoNomeMap.get(c.veiculo_id) ?? "—",
           categoria: tipoCustoLabel[c.tipo as TipoCusto] ?? c.tipo,
           km: c.km ?? null,
           valor: Number(c.valor),
@@ -443,7 +443,7 @@ function RelatoriosPage() {
         const [y, mo, d] = m.data.split("-").map(Number);
         wsM.addRow({
           data: new Date(y, mo - 1, d),
-          veiculo: veiculoLabel.get(m.veiculo_id) ?? "—",
+          veiculo: veiculoNomeMap.get(m.veiculo_id) ?? "—",
           peca: m.peca_servico,
           oficina: m.oficina ?? "",
           valor: m.valor != null ? Number(m.valor) : null,
