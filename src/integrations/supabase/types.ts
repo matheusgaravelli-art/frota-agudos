@@ -173,39 +173,54 @@ export type Database = {
       }
       veiculos: {
         Row: {
+          codigo: string | null
+          cor: string | null
           created_at: string
+          departamento: string | null
+          fotos: string[]
           id: string
           km_atual: number
           marca_modelo: string | null
           motorista: string | null
           motorista_id: string | null
-          nome: string
+          nome: string | null
           placa: string
           status: string
+          tipo: string | null
           updated_at: string
         }
         Insert: {
+          codigo?: string | null
+          cor?: string | null
           created_at?: string
+          departamento?: string | null
+          fotos?: string[]
           id?: string
           km_atual?: number
           marca_modelo?: string | null
           motorista?: string | null
           motorista_id?: string | null
-          nome: string
+          nome?: string | null
           placa: string
           status?: string
+          tipo?: string | null
           updated_at?: string
         }
         Update: {
+          codigo?: string | null
+          cor?: string | null
           created_at?: string
+          departamento?: string | null
+          fotos?: string[]
           id?: string
           km_atual?: number
           marca_modelo?: string | null
           motorista?: string | null
           motorista_id?: string | null
-          nome?: string
+          nome?: string | null
           placa?: string
           status?: string
+          tipo?: string | null
           updated_at?: string
         }
         Relationships: [
