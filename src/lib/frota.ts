@@ -16,12 +16,38 @@ export type Veiculo = {
   km_atual: number;
   status: StatusVeiculo;
   fotos: string[];
+  duplicado: boolean;
   created_at: string;
   updated_at: string;
 };
 
 export function veiculoLabel(v: { codigo?: string | null; nome?: string | null; placa?: string }) {
   return v.codigo || v.nome || v.placa || "Veículo";
+}
+
+/** Título do card: Marca/Modelo (cai para ID ou placa quando não informado). */
+export function veiculoTitulo(v: {
+  marca_modelo?: string | null;
+  codigo?: string | null;
+  nome?: string | null;
+  placa?: string;
+}) {
+  return v.marca_modelo?.trim() || veiculoLabel(v);
+}
+
+/** Ordena por Departamento (A→Z) e, dentro dele, por Marca/Modelo (A→Z). */
+export function ordenarVeiculos<
+  T extends { departamento?: string | null; marca_modelo?: string | null; placa?: string },
+>(lista: T[]) {
+  const col = new Intl.Collator("pt-BR", { sensitivity: "base", numeric: true });
+  return [...lista].sort((a, b) => {
+    const depA = (a.departamento || "").trim();
+    const depB = (b.departamento || "").trim();
+    if (!depA !== !depB) return depA ? -1 : 1;
+    const d = col.compare(depA, depB);
+    if (d !== 0) return d;
+    return col.compare(veiculoTitulo(a), veiculoTitulo(b));
+  });
 }
 
 
