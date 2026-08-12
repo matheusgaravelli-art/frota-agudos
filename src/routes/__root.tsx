@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useRealtimeFrota } from "@/lib/use-realtime-frota";
 
 function NotFoundComponent() {
   return (
@@ -126,8 +127,14 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <RealtimeSync />
       <Outlet />
       <Toaster richColors position="top-right" />
     </QueryClientProvider>
   );
+}
+
+function RealtimeSync() {
+  useRealtimeFrota();
+  return null;
 }

@@ -4,9 +4,11 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   listVeiculos,
+  ordenarVeiculos,
   statusVeiculoLabel,
   statusVeiculoTone,
   veiculoLabel,
+  veiculoTitulo,
   type Veiculo,
   type StatusVeiculo,
 } from "@/lib/frota";
@@ -30,7 +32,17 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Pencil, Trash2, Search, Upload, Camera, X, Image as ImageIcon } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Search,
+  Upload,
+  Camera,
+  X,
+  ChevronDown,
+  Image as ImageIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -73,18 +85,28 @@ function VeiculosPage() {
   });
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<"todos" | StatusVeiculo>("todos");
+  const [filtroDep, setFiltroDep] = useState<string>("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState<Veiculo | null>(null);
 
-  const filtered = veiculos.filter((v) => {
-    if (filtroStatus !== "todos" && v.status !== filtroStatus) return false;
-    const q = busca.toLowerCase().trim();
-    if (!q) return true;
-    return [v.codigo, v.nome, v.placa, v.tipo, v.cor, v.departamento, v.marca_modelo]
-      .filter(Boolean)
-      .some((campo) => String(campo).toLowerCase().includes(q));
-  });
+  const departamentos = Array.from(
+    new Set(veiculos.map((v) => (v.departamento || "").trim()).filter(Boolean)),
+  ).sort((a, b) => a.localeCompare(b, "pt-BR", { sensitivity: "base" }));
+
+  const filtered = ordenarVeiculos(
+    veiculos.filter((v) => {
+      if (filtroStatus !== "todos" && v.status !== filtroStatus) return false;
+      if (filtroDep === "sem" && (v.departamento || "").trim()) return false;
+      if (filtroDep !== "todos" && filtroDep !== "sem" && (v.departamento || "").trim() !== filtroDep)
+        return false;
+      const q = busca.toLowerCase().trim();
+      if (!q) return true;
+      return [v.codigo, v.nome, v.placa, v.tipo, v.cor, v.departamento, v.marca_modelo]
+        .filter(Boolean)
+        .some((campo) => String(campo).toLowerCase().includes(q));
+    }),
+  );
 
   const deleteMut = useMutation({
     mutationFn: async (id: string) => {
@@ -101,6 +123,18 @@ function VeiculosPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const limparMarca = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("veiculos").update({ duplicado: false }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Marcação de duplicidade removida");
+      qc.invalidateQueries({ queryKey: ["veiculos"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const openNew = () => {
     setEditing(null);
     setDialogOpen(true);
@@ -109,6 +143,8 @@ function VeiculosPage() {
     setEditing(v);
     setDialogOpen(true);
   };
+
+  const marcados = veiculos.filter((v) => v.duplicado).length;
 
   return (
     <div className="space-y-6">
@@ -127,16 +163,37 @@ function VeiculosPage() {
         </div>
       </div>
 
+      {marcados > 0 && (
+        <div className="rounded-md border border-warning/40 bg-warning/10 px-4 py-3 text-sm">
+          <strong>{marcados}</strong> veículo(s) marcado(s) com <strong>*</strong> por placa repetida
+          na última planilha adicionada. Abra cada um, confira os dados e retire a marcação.
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[220px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por ID, placa, tipo, cor ou departamento..."
+            placeholder="Buscar por marca/modelo, placa, tipo, cor ou departamento..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             className="pl-9 h-11"
           />
         </div>
+        <Select value={filtroDep} onValueChange={setFiltroDep}>
+          <SelectTrigger className="h-11 w-full sm:w-[230px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos os departamentos</SelectItem>
+            {departamentos.map((d) => (
+              <SelectItem key={d} value={d}>
+                {d}
+              </SelectItem>
+            ))}
+            <SelectItem value="sem">Sem departamento</SelectItem>
+          </SelectContent>
+        </Select>
         <Select
           value={filtroStatus}
           onValueChange={(v) => setFiltroStatus(v as typeof filtroStatus)}
@@ -164,88 +221,167 @@ function VeiculosPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((v) => {
-            const st = (v.status ?? "ativo") as StatusVeiculo;
-            return (
-              <Card key={v.id}>
-                <CardContent className="pt-5 space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="font-semibold text-lg leading-tight truncate">
-                        {veiculoLabel(v)}
-                      </div>
-                      <div className="text-sm font-mono text-muted-foreground uppercase">
-                        {v.placa}
-                      </div>
-                    </div>
-                    <span
-                      className={cn(
-                        "text-xs px-2 py-0.5 rounded-full border font-medium shrink-0",
-                        statusVeiculoTone[st],
-                      )}
-                    >
-                      {statusVeiculoLabel[st]}
-                    </span>
-                  </div>
-                  <div className="text-sm space-y-1">
-                    {v.tipo && (
-                      <div>
-                        <span className="text-muted-foreground">Tipo:</span> {v.tipo}
-                      </div>
-                    )}
-                    {v.marca_modelo && (
-                      <div>
-                        <span className="text-muted-foreground">Marca/Modelo:</span> {v.marca_modelo}
-                      </div>
-                    )}
-                    {v.cor && (
-                      <div>
-                        <span className="text-muted-foreground">Cor:</span> {v.cor}
-                      </div>
-                    )}
-                    {v.departamento && (
-                      <div>
-                        <span className="text-muted-foreground">Dep.:</span> {v.departamento}
-                      </div>
-                    )}
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <ImageIcon className="h-3.5 w-3.5" />
-                      {(v.fotos ?? []).length}/{MAX_FOTOS} foto(s)
-                    </div>
-                  </div>
-                  <div className="flex gap-2 pt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openEdit(v)}
-                      className="flex-1 gap-1 h-10"
-                    >
-                      <Pencil className="h-3.5 w-3.5" /> Abrir
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        if (confirm(`Excluir ${veiculoLabel(v)} (${v.placa})?`)) {
-                          deleteMut.mutate(v.id);
-                        }
-                      }}
-                      className="gap-1 h-10 text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 items-start">
+          {filtered.map((v) => (
+            <VeiculoCard
+              key={v.id}
+              veiculo={v}
+              onEditar={() => openEdit(v)}
+              onExcluir={() => {
+                if (confirm(`Excluir ${veiculoTitulo(v)} (${v.placa})?`)) deleteMut.mutate(v.id);
+              }}
+              onLimparMarca={() => limparMarca.mutate(v.id)}
+            />
+          ))}
         </div>
       )}
 
       <VeiculoDialog open={dialogOpen} onOpenChange={setDialogOpen} editing={editing} />
       <ImportarDialog open={importOpen} onOpenChange={setImportOpen} />
     </div>
+  );
+}
+
+/** Tamanho da fonte do título conforme o comprimento, para nunca cortar o nome. */
+function tituloClasse(titulo: string) {
+  if (titulo.length <= 18) return "text-lg";
+  if (titulo.length <= 28) return "text-base";
+  if (titulo.length <= 40) return "text-sm";
+  return "text-xs";
+}
+
+function VeiculoCard({
+  veiculo: v,
+  onEditar,
+  onExcluir,
+  onLimparMarca,
+}: {
+  veiculo: Veiculo;
+  onEditar: () => void;
+  onExcluir: () => void;
+  onLimparMarca: () => void;
+}) {
+  const [aberto, setAberto] = useState(false);
+  const [urls, setUrls] = useState<string[]>([]);
+  const st = (v.status ?? "ativo") as StatusVeiculo;
+  const titulo = veiculoTitulo(v);
+  const fotos = v.fotos ?? [];
+
+  useEffect(() => {
+    if (!aberto || fotos.length === 0) return;
+    let ativo = true;
+    getFotoUrls(fotos)
+      .then((u) => ativo && setUrls(u))
+      .catch(() => ativo && setUrls([]));
+    return () => {
+      ativo = false;
+    };
+  }, [aberto, v.id, fotos.length]);
+
+  return (
+    <Card>
+      <CardContent className="pt-5 space-y-3">
+        <button
+          type="button"
+          onClick={() => setAberto((a) => !a)}
+          aria-expanded={aberto}
+          className="w-full text-left flex items-start justify-between gap-2"
+        >
+          <div className="min-w-0">
+            <div className={cn("font-semibold leading-snug break-words", tituloClasse(titulo))}>
+              {v.duplicado && (
+                <span className="text-destructive mr-1" title="Placa repetida na importação">
+                  *
+                </span>
+              )}
+              {titulo}
+            </div>
+            <div className="text-sm font-mono text-muted-foreground uppercase mt-0.5">{v.placa}</div>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            <span
+              className={cn(
+                "text-xs px-2 py-0.5 rounded-full border font-medium",
+                statusVeiculoTone[st],
+              )}
+            >
+              {statusVeiculoLabel[st]}
+            </span>
+            <ChevronDown
+              className={cn("h-4 w-4 text-muted-foreground transition-transform", aberto && "rotate-180")}
+            />
+          </div>
+        </button>
+
+        {aberto && (
+          <div className="space-y-3 border-t pt-3">
+            {fotos.length > 0 ? (
+              <div className="grid grid-cols-2 gap-2">
+                {fotos.map((p, i) =>
+                  urls[i] ? (
+                    <img
+                      key={p}
+                      src={urls[i]}
+                      alt={`Foto do veículo ${titulo}`}
+                      loading="lazy"
+                      className="w-full h-28 object-cover rounded-md border"
+                    />
+                  ) : (
+                    <div key={p} className="w-full h-28 rounded-md border bg-muted" />
+                  ),
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <ImageIcon className="h-3.5 w-3.5" /> Nenhuma foto anexada
+              </div>
+            )}
+
+            <div className="text-sm space-y-1">
+              {v.tipo && (
+                <div>
+                  <span className="text-muted-foreground">Tipo:</span> {v.tipo}
+                </div>
+              )}
+              {v.cor && (
+                <div>
+                  <span className="text-muted-foreground">Cor:</span> {v.cor}
+                </div>
+              )}
+              {v.departamento && (
+                <div>
+                  <span className="text-muted-foreground">Departamento:</span> {v.departamento}
+                </div>
+              )}
+              <div className="text-xs text-muted-foreground pt-1">
+                ID Veículo: {v.codigo || v.nome || "—"}
+              </div>
+            </div>
+
+            {v.duplicado && (
+              <Button variant="outline" size="sm" onClick={onLimparMarca} className="h-9 w-full">
+                Retirar marcação de duplicidade
+              </Button>
+            )}
+
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={onEditar} className="flex-1 gap-1 h-10">
+                <Pencil className="h-3.5 w-3.5" /> Editar / fotos
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onExcluir}
+                aria-label="Excluir veículo"
+                className="gap-1 h-10 text-destructive hover:text-destructive"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
