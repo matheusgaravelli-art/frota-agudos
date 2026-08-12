@@ -32,7 +32,17 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Pencil, Trash2, Search, Upload, Camera, X, Image as ImageIcon } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Search,
+  Upload,
+  Camera,
+  X,
+  ChevronDown,
+  Image as ImageIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
