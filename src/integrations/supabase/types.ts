@@ -177,6 +177,7 @@ export type Database = {
           cor: string | null
           created_at: string
           departamento: string | null
+          duplicado: boolean
           fotos: string[]
           id: string
           km_atual: number
@@ -194,6 +195,7 @@ export type Database = {
           cor?: string | null
           created_at?: string
           departamento?: string | null
+          duplicado?: boolean
           fotos?: string[]
           id?: string
           km_atual?: number
@@ -211,6 +213,7 @@ export type Database = {
           cor?: string | null
           created_at?: string
           departamento?: string | null
+          duplicado?: boolean
           fotos?: string[]
           id?: string
           km_atual?: number
