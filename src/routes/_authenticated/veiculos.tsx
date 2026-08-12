@@ -4,9 +4,11 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   listVeiculos,
+  ordenarVeiculos,
   statusVeiculoLabel,
   statusVeiculoTone,
   veiculoLabel,
+  veiculoTitulo,
   type Veiculo,
   type StatusVeiculo,
 } from "@/lib/frota";
