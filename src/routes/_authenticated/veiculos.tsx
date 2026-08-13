@@ -701,7 +701,7 @@ function ImportarDialog({
 }) {
   const qc = useQueryClient();
   const [processando, setProcessando] = useState(false);
-  const [limpar, setLimpar] = useState(true);
+  const [modo, setModo] = useState<"substituir" | "adicionar">("adicionar");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const pick = (row: Record<string, unknown>, chaves: string[]) => {
@@ -739,6 +739,7 @@ function ImportarDialog({
             nome: codigo || null,
             tipo: pick(r, ["tipo"]) || null,
             cor: pick(r, ["cor"]) || null,
+            marca_modelo: pick(r, ["marcamodelo", "marca", "modelo"]) || null,
             departamento: pick(r, ["dep", "departamento", "secretaria"]) || null,
             placa,
             status: STATUS_MAP[statusTxt] ?? "ativo",
@@ -754,21 +755,69 @@ function ImportarDialog({
         return;
       }
 
-      if (limpar) {
-        const { error: delErr } = await supabase
-          .from("veiculos")
-          .delete()
-          .not("id", "is", null);
+      if (modo === "substituir") {
+        const { error: delErr } = await supabase.from("veiculos").delete().not("id", "is", null);
         if (delErr) throw delErr;
+
+        for (let i = 0; i < registros.length; i += 200) {
+          const { error } = await supabase.from("veiculos").insert(registros.slice(i, i + 200));
+          if (error) throw error;
+        }
+        qc.invalidateQueries({ queryKey: ["veiculos"] });
+        toast.success(`${registros.length} veículo(s) importado(s), substituindo a lista anterior.`);
+        onOpenChange(false);
+        return;
       }
 
-      for (let i = 0; i < registros.length; i += 200) {
-        const { error } = await supabase.from("veiculos").insert(registros.slice(i, i + 200));
+      // Apenas adicionar: não cria registro repetido, apenas marca o existente com "*"
+      const { data: existentes, error: exErr } = await supabase
+        .from("veiculos")
+        .select("id, placa");
+      if (exErr) throw exErr;
+
+      const mapaPlacas = new Map<string, string>();
+      (existentes ?? []).forEach((e) => {
+        if (e.placa) mapaPlacas.set(String(e.placa).toUpperCase().trim(), e.id);
+      });
+
+      const novos: typeof registros = [];
+      const idsDuplicados = new Set<string>();
+      const placasNovas = new Set<string>();
+
+      for (const r of registros) {
+        const placa = r.placa.trim();
+        const jaExiste = placa ? mapaPlacas.get(placa) : undefined;
+        if (jaExiste) {
+          idsDuplicados.add(jaExiste);
+          continue;
+        }
+        if (placa && placasNovas.has(placa)) continue;
+        if (placa) placasNovas.add(placa);
+        novos.push(r);
+      }
+
+      for (let i = 0; i < novos.length; i += 200) {
+        const lote = novos.slice(i, i + 200);
+        if (lote.length === 0) continue;
+        const { error } = await supabase.from("veiculos").insert(lote);
+        if (error) throw error;
+      }
+
+      if (idsDuplicados.size > 0) {
+        const { error } = await supabase
+          .from("veiculos")
+          .update({ duplicado: true })
+          .in("id", Array.from(idsDuplicados));
         if (error) throw error;
       }
 
       qc.invalidateQueries({ queryKey: ["veiculos"] });
-      toast.success(`${registros.length} veículo(s) importado(s) com sucesso.`);
+      toast.success(
+        `${novos.length} veículo(s) adicionado(s).` +
+          (idsDuplicados.size > 0
+            ? ` ${idsDuplicados.size} placa(s) já cadastrada(s) foram marcadas com * para você conferir.`
+            : ""),
+      );
       onOpenChange(false);
     } catch (e) {
       toast.error(`Não foi possível importar: ${(e as Error).message}`);
@@ -784,23 +833,43 @@ function ImportarDialog({
         <DialogHeader>
           <DialogTitle>Importar veículos por planilha</DialogTitle>
           <DialogDescription>
-            A planilha (Excel ou CSV) deve ter as colunas: ID Veículo, Tipo, Cor, Dep., Placa,
-            Status. Cada linha vira um veículo.
+            A planilha (Excel ou CSV) deve ter as colunas: ID Veículo, Tipo, Cor, Marca/Modelo,
+            Dep., Placa, Status. Cada linha vira um veículo.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
-          <label className="flex items-start gap-3 text-sm">
-            <input
-              type="checkbox"
-              checked={limpar}
-              onChange={(e) => setLimpar(e.target.checked)}
-              className="mt-1 h-4 w-4"
-            />
-            <span>
-              Substituir a lista atual de veículos (apaga os veículos cadastrados antes de
-              importar). Custos, manutenções e vencimentos ligados a eles também são removidos.
-            </span>
-          </label>
+          <div className="space-y-2">
+            <Label>O que fazer com os dados atuais?</Label>
+            <button
+              type="button"
+              onClick={() => setModo("substituir")}
+              className={cn(
+                "w-full text-left rounded-md border p-3 text-sm transition-colors",
+                modo === "substituir" ? "border-primary bg-accent" : "hover:bg-accent/50",
+              )}
+            >
+              <span className="font-medium">1. Substituir todos os dados</span>
+              <span className="block text-muted-foreground mt-1">
+                Apaga os veículos cadastrados e usa somente os da nova planilha. Custos,
+                manutenções e vencimentos ligados a eles também são apagados.
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setModo("adicionar")}
+              className={cn(
+                "w-full text-left rounded-md border p-3 text-sm transition-colors",
+                modo === "adicionar" ? "border-primary bg-accent" : "hover:bg-accent/50",
+              )}
+            >
+              <span className="font-medium">2. Apenas adicionar os novos</span>
+              <span className="block text-muted-foreground mt-1">
+                Mantém tudo que já existe. Se a placa já estiver cadastrada, nenhum registro novo é
+                criado — o veículo existente recebe um <strong>*</strong> para você conferir e
+                corrigir.
+              </span>
+            </button>
+          </div>
           <input
             ref={fileRef}
             type="file"
@@ -815,10 +884,21 @@ function ImportarDialog({
             type="button"
             className="w-full h-12 gap-2"
             disabled={processando}
-            onClick={() => fileRef.current?.click()}
+            onClick={() => {
+              if (
+                modo === "substituir" &&
+                !confirm("Isso apaga todos os veículos já cadastrados. Deseja continuar?")
+              )
+                return;
+              fileRef.current?.click();
+            }}
           >
             <Upload className="h-4 w-4" />
-            {processando ? "Importando..." : "Escolher planilha e importar"}
+            {processando
+              ? "Importando..."
+              : modo === "substituir"
+                ? "Escolher planilha e substituir tudo"
+                : "Escolher planilha e adicionar"}
           </Button>
         </div>
       </DialogContent>
