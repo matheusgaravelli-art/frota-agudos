@@ -12,7 +12,6 @@ import {
   ordenarVeiculos,
   type TipoCusto,
   type StatusVeiculo,
-  veiculoLabel,
   veiculoTitulo,
 } from "@/lib/frota";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -414,7 +413,12 @@ function RelatoriosPage() {
       const money = "R$ #,##0.00";
       const intFmt = "#,##0";
 
-      const tituloBloco = (ws: ExcelJS.Worksheet, texto: string, span: string, altura = 24) => {
+      type WsLike = {
+        mergeCells: (r: string) => void;
+        getCell: (r: string) => { value: unknown; font: unknown; fill: unknown; alignment: unknown };
+        getRow: (n: number) => { height: number };
+      };
+      const tituloBloco = (ws: WsLike, texto: string, span: string, altura = 24) => {
         ws.mergeCells(span);
         const c = ws.getCell(span.split(":")[0]);
         c.value = texto;
