@@ -17,8 +17,23 @@ export type Veiculo = {
   status: StatusVeiculo;
   fotos: string[];
   duplicado: boolean;
+  observacao: string | null;
+  max_anexos: number;
   created_at: string;
   updated_at: string;
+};
+
+export type Etiqueta = {
+  id: string;
+  nome: string;
+  cor: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type VeiculoEtiqueta = {
+  veiculo_id: string;
+  etiqueta_id: string;
 };
 
 export function veiculoLabel(v: { codigo?: string | null; nome?: string | null; placa?: string }) {
@@ -61,6 +76,7 @@ export type Custo = {
   km: number | null;
   data: string;
   descricao: string | null;
+  pendente: boolean;
   created_at: string;
 };
 
@@ -151,6 +167,18 @@ export async function listManutencoes() {
   const { data, error } = await supabase.from("manutencoes").select("*").order("data", { ascending: false });
   if (error) throw error;
   return data as Manutencao[];
+}
+
+export async function listEtiquetas() {
+  const { data, error } = await supabase.from("etiquetas").select("*").order("nome");
+  if (error) throw error;
+  return data as Etiqueta[];
+}
+
+export async function listVeiculoEtiquetas() {
+  const { data, error } = await supabase.from("veiculo_etiquetas").select("veiculo_id, etiqueta_id");
+  if (error) throw error;
+  return data as VeiculoEtiqueta[];
 }
 
 export function formatBRL(v: number) {

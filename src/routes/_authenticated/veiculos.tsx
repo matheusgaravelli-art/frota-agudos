@@ -4,6 +4,10 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   listVeiculos,
+  listCustos,
+  listEtiquetas,
+  listVeiculoEtiquetas,
+  type Etiqueta,
   ordenarVeiculos,
   statusVeiculoLabel,
   statusVeiculoTone,
@@ -12,7 +16,17 @@ import {
   type Veiculo,
   type StatusVeiculo,
 } from "@/lib/frota";
-import { MAX_FOTOS, getFotoUrls, removeFoto, uploadFoto } from "@/lib/veiculo-fotos";
+import {
+  MAX_FOTOS,
+  ANEXO_ACCEPT,
+  getFotoUrls,
+  removeFoto,
+  uploadFoto,
+  isPdf,
+} from "@/lib/veiculo-fotos";
+import { AnexoViewer, type AnexoAberto } from "@/components/anexo-viewer";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,6 +56,9 @@ import {
   X,
   ChevronDown,
   Image as ImageIcon,
+  FileText,
+  Tag,
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -83,6 +100,17 @@ function VeiculosPage() {
     queryKey: ["veiculos"],
     queryFn: listVeiculos,
   });
+  const etiquetasQ = useQuery({ queryKey: ["etiquetas"], queryFn: listEtiquetas });
+  const vinculosQ = useQuery({ queryKey: ["veiculo_etiquetas"], queryFn: listVeiculoEtiquetas });
+  const custosQ = useQuery({ queryKey: ["custos"], queryFn: listCustos });
+  const etiquetas = etiquetasQ.data ?? [];
+  const vinculos = vinculosQ.data ?? [];
+  const pendentesPorVeiculo = new Map<string, number>();
+  (custosQ.data ?? [])
+    .filter((c) => c.pendente)
+    .forEach((c) => pendentesPorVeiculo.set(c.veiculo_id, (pendentesPorVeiculo.get(c.veiculo_id) ?? 0) + 1));
+
+  const [etiquetasOpen, setEtiquetasOpen] = useState(false);
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<"todos" | StatusVeiculo>("todos");
   const [filtroDep, setFiltroDep] = useState<string>("todos");
@@ -154,6 +182,9 @@ function VeiculosPage() {
           <p className="text-sm text-muted-foreground mt-1">{veiculos.length} cadastrado(s)</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button size="lg" variant="outline" onClick={() => setEtiquetasOpen(true)} className="gap-2">
+            <Tag className="h-4 w-4" /> Etiquetas
+          </Button>
           <Button size="lg" variant="outline" onClick={() => setImportOpen(true)} className="gap-2">
             <Upload className="h-4 w-4" /> Importar planilha
           </Button>
@@ -226,6 +257,10 @@ function VeiculosPage() {
             <VeiculoCard
               key={v.id}
               veiculo={v}
+              etiquetas={etiquetas.filter((e) =>
+                vinculos.some((x) => x.veiculo_id === v.id && x.etiqueta_id === e.id),
+              )}
+              custosPendentes={pendentesPorVeiculo.get(v.id) ?? 0}
               onEditar={() => openEdit(v)}
               onExcluir={() => {
                 if (confirm(`Excluir ${veiculoTitulo(v)} (${v.placa})?`)) deleteMut.mutate(v.id);
@@ -236,8 +271,15 @@ function VeiculosPage() {
         </div>
       )}
 
-      <VeiculoDialog open={dialogOpen} onOpenChange={setDialogOpen} editing={editing} />
+      <VeiculoDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        editing={editing}
+        veiculos={veiculos}
+        etiquetas={etiquetas}
+      />
       <ImportarDialog open={importOpen} onOpenChange={setImportOpen} />
+      <EtiquetasDialog open={etiquetasOpen} onOpenChange={setEtiquetasOpen} etiquetas={etiquetas} />
     </div>
   );
 }
@@ -252,17 +294,22 @@ function tituloClasse(titulo: string) {
 
 function VeiculoCard({
   veiculo: v,
+  etiquetas,
+  custosPendentes,
   onEditar,
   onExcluir,
   onLimparMarca,
 }: {
   veiculo: Veiculo;
+  etiquetas: Etiqueta[];
+  custosPendentes: number;
   onEditar: () => void;
   onExcluir: () => void;
   onLimparMarca: () => void;
 }) {
   const [aberto, setAberto] = useState(false);
   const [urls, setUrls] = useState<string[]>([]);
+  const [anexoAberto, setAnexoAberto] = useState<AnexoAberto>(null);
   const st = (v.status ?? "ativo") as StatusVeiculo;
   const titulo = veiculoTitulo(v);
   const fotos = v.fotos ?? [];
@@ -299,6 +346,26 @@ function VeiculoCard({
             <div className="text-sm font-mono text-muted-foreground uppercase mt-0.5">{v.placa}</div>
           </div>
           <div className="flex items-center gap-1 shrink-0">
+            {etiquetas.length > 0 && (
+              <span className="flex items-center gap-0.5 mr-0.5">
+                {etiquetas.map((e) => (
+                  <span
+                    key={e.id}
+                    title={e.nome}
+                    aria-label={`Etiqueta ${e.nome}`}
+                    className="h-2.5 w-2.5 rounded-full border border-border"
+                    style={{ backgroundColor: e.cor }}
+                  />
+                ))}
+              </span>
+            )}
+            {custosPendentes > 0 && (
+              <AlertCircle
+                className="h-4 w-4 text-warning"
+                title={`${custosPendentes} custo(s) pendente(s)`}
+                aria-label={`${custosPendentes} custo pendente`}
+              />
+            )}
             <span
               className={cn(
                 "text-xs px-2 py-0.5 rounded-full border font-medium",
@@ -319,13 +386,26 @@ function VeiculoCard({
               <div className="grid grid-cols-2 gap-2">
                 {fotos.map((p, i) =>
                   urls[i] ? (
-                    <img
+                    <button
                       key={p}
-                      src={urls[i]}
-                      alt={`Foto do veículo ${titulo}`}
-                      loading="lazy"
-                      className="w-full h-28 object-cover rounded-md border"
-                    />
+                      type="button"
+                      onClick={() => setAnexoAberto({ url: urls[i], path: p })}
+                      className="block w-full rounded-md border overflow-hidden"
+                      title="Ver em tamanho ampliado"
+                    >
+                      {isPdf(p) ? (
+                        <span className="flex h-28 w-full items-center justify-center gap-2 bg-muted text-xs font-medium">
+                          <FileText className="h-4 w-4" /> Ver PDF
+                        </span>
+                      ) : (
+                        <img
+                          src={urls[i]}
+                          alt={`Anexo do veículo ${titulo}`}
+                          loading="lazy"
+                          className="w-full h-28 object-cover"
+                        />
+                      )}
+                    </button>
                   ) : (
                     <div key={p} className="w-full h-28 rounded-md border bg-muted" />
                   ),
@@ -351,6 +431,32 @@ function VeiculoCard({
               {v.departamento && (
                 <div>
                   <span className="text-muted-foreground">Departamento:</span> {v.departamento}
+                </div>
+              )}
+              {v.observacao && (
+                <div>
+                  <span className="text-muted-foreground">Observação:</span> {v.observacao}
+                </div>
+              )}
+              {etiquetas.length > 0 && (
+                <div className="flex flex-wrap gap-1 pt-1">
+                  {etiquetas.map((e) => (
+                    <span
+                      key={e.id}
+                      className="text-xs px-2 py-0.5 rounded-full border flex items-center gap-1"
+                    >
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: e.cor }}
+                      />
+                      {e.nome}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {custosPendentes > 0 && (
+                <div className="text-warning-foreground text-xs pt-1">
+                  {custosPendentes} custo(s) pendente(s) de pagamento
                 </div>
               )}
               <div className="text-xs text-muted-foreground pt-1">
@@ -380,6 +486,7 @@ function VeiculoCard({
             </div>
           </div>
         )}
+        <AnexoViewer anexo={anexoAberto} onClose={() => setAnexoAberto(null)} />
       </CardContent>
     </Card>
   );
