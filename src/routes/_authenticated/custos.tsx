@@ -254,18 +254,7 @@ function CustoDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label>Veículo</Label>
-            <Select value={veiculoId} onValueChange={setVeiculoId}>
-              <SelectTrigger className="h-11">
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent>
-                {veiculos.map((v) => (
-                  <SelectItem key={v.id} value={v.id}>
-                    {veiculoLabel(v)} ({v.placa})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <VeiculoCombobox veiculos={veiculos} value={veiculoId} onChange={setVeiculoId} />
           </div>
           <div className="space-y-2">
             <Label>Categoria</Label>
