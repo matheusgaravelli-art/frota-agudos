@@ -76,6 +76,7 @@ export type Custo = {
   km: number | null;
   data: string;
   descricao: string | null;
+  pendente: boolean;
   created_at: string;
 };
 
