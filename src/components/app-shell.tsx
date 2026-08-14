@@ -13,6 +13,7 @@ import {
   Search,
 } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
