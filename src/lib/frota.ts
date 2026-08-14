@@ -17,8 +17,23 @@ export type Veiculo = {
   status: StatusVeiculo;
   fotos: string[];
   duplicado: boolean;
+  observacao: string | null;
+  max_anexos: number;
   created_at: string;
   updated_at: string;
+};
+
+export type Etiqueta = {
+  id: string;
+  nome: string;
+  cor: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type VeiculoEtiqueta = {
+  veiculo_id: string;
+  etiqueta_id: string;
 };
 
 export function veiculoLabel(v: { codigo?: string | null; nome?: string | null; placa?: string }) {
