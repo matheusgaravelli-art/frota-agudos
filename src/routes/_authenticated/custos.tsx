@@ -29,6 +29,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { VeiculoCombobox } from "@/components/veiculo-combobox";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -136,6 +138,11 @@ function CustosPage() {
                           {tipoCustoLabel[c.tipo as TipoCusto] ?? c.tipo}
                         </span>
                         <span className="text-xs text-muted-foreground">{formatData(c.data)}</span>
+                        {c.pendente && (
+                          <span className="text-xs px-2 py-0.5 rounded-full border border-warning/40 bg-warning/15 text-warning-foreground font-medium">
+                            Pendente
+                          </span>
+                        )}
                       </div>
                       <div className="text-sm text-muted-foreground truncate">
                         {veiculoMap.get(c.veiculo_id) ?? "—"}
@@ -185,6 +192,7 @@ function CustoDialog({
   const qc = useQueryClient();
   const [tipo, setTipo] = useState<TipoCusto>("combustivel");
   const [veiculoId, setVeiculoId] = useState<string>("");
+  const [pendente, setPendente] = useState(false);
 
   const submit = useMutation({
     mutationFn: async (form: {
@@ -194,6 +202,7 @@ function CustoDialog({
       km: number;
       data: string;
       descricao: string;
+      pendente: boolean;
     }) => {
       const { error } = await supabase.from("custos").insert(form);
       if (error) throw error;
@@ -232,7 +241,7 @@ function CustoDialog({
       return;
     }
 
-    submit.mutate({ veiculo_id: veiculoId, tipo, valor, km, data, descricao });
+    submit.mutate({ veiculo_id: veiculoId, tipo, valor, km, data, descricao, pendente });
   };
 
 
@@ -242,7 +251,8 @@ function CustoDialog({
       onOpenChange={(v) => {
         if (v) {
           setTipo("combustivel");
-          setVeiculoId(veiculos[0]?.id ?? "");
+          setVeiculoId("");
+          setPendente(false);
         }
         onOpenChange(v);
       }}
@@ -302,6 +312,10 @@ function CustoDialog({
             <Label htmlFor="descricao">Descrição (opcional)</Label>
             <Input id="descricao" name="descricao" />
           </div>
+          <label className="flex items-center gap-3 rounded-md border p-3 cursor-pointer">
+            <Checkbox checked={pendente} onCheckedChange={(v) => setPendente(v === true)} />
+            <span className="text-sm">Este custo está pendente de pagamento</span>
+          </label>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
