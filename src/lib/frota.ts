@@ -169,6 +169,18 @@ export async function listManutencoes() {
   return data as Manutencao[];
 }
 
+export async function listEtiquetas() {
+  const { data, error } = await supabase.from("etiquetas").select("*").order("nome");
+  if (error) throw error;
+  return data as Etiqueta[];
+}
+
+export async function listVeiculoEtiquetas() {
+  const { data, error } = await supabase.from("veiculo_etiquetas").select("veiculo_id, etiqueta_id");
+  if (error) throw error;
+  return data as VeiculoEtiqueta[];
+}
+
 export function formatBRL(v: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 }
