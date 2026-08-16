@@ -360,11 +360,13 @@ function VeiculoCard({
               </span>
             )}
             {custosPendentes > 0 && (
-              <AlertCircle
-                className="h-4 w-4 text-warning"
+              <span
                 title={`${custosPendentes} custo(s) pendente(s)`}
                 aria-label={`${custosPendentes} custo pendente`}
-              />
+                className="text-warning"
+              >
+                <AlertCircle className="h-4 w-4" />
+              </span>
             )}
             <span
               className={cn(
