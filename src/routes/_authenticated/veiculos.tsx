@@ -360,11 +360,13 @@ function VeiculoCard({
               </span>
             )}
             {custosPendentes > 0 && (
-              <AlertCircle
-                className="h-4 w-4 text-warning"
+              <span
                 title={`${custosPendentes} custo(s) pendente(s)`}
                 aria-label={`${custosPendentes} custo pendente`}
-              />
+                className="text-warning"
+              >
+                <AlertCircle className="h-4 w-4" />
+              </span>
             )}
             <span
               className={cn(
@@ -496,14 +498,21 @@ function VeiculoDialog({
   open,
   onOpenChange,
   editing,
+  veiculos,
+  etiquetas,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   editing: Veiculo | null;
+  veiculos: Veiculo[];
+  etiquetas: Etiqueta[];
 }) {
   const qc = useQueryClient();
   const [status, setStatus] = useState<StatusVeiculo>(editing?.status ?? "ativo");
   const [fotos, setFotos] = useState<string[]>(editing?.fotos ?? []);
+  const [limite, setLimite] = useState<number>(editing?.max_anexos ?? MAX_FOTOS);
+  const [selecionadas, setSelecionadas] = useState<string[]>([]);
+  const [anexoAberto, setAnexoAberto] = useState<AnexoAberto>(null);
   const [urls, setUrls] = useState<string[]>([]);
   const [enviando, setEnviando] = useState(false);
   const cameraRef = useRef<HTMLInputElement>(null);
@@ -513,7 +522,57 @@ function VeiculoDialog({
     if (!open) return;
     setStatus(editing?.status ?? "ativo");
     setFotos(editing?.fotos ?? []);
+    setLimite(editing?.max_anexos ?? MAX_FOTOS);
+    if (editing) {
+      supabase
+        .from("veiculo_etiquetas")
+        .select("etiqueta_id")
+        .eq("veiculo_id", editing.id)
+        .then(({ data }) => setSelecionadas((data ?? []).map((d) => d.etiqueta_id)));
+    } else {
+      setSelecionadas([]);
+    }
   }, [open, editing]);
+
+  const liberarEspaco = async () => {
+    const novo = limite + 1;
+    setLimite(novo);
+    if (editing) {
+      const { error } = await supabase
+        .from("veiculos")
+        .update({ max_anexos: novo })
+        .eq("id", editing.id);
+      if (error) {
+        toast.error(`Não foi possível liberar o espaço: ${error.message}`);
+        return;
+      }
+      qc.invalidateQueries({ queryKey: ["veiculos"] });
+    }
+    toast.success("Mais um espaço de anexo liberado");
+  };
+
+  const alternarEtiqueta = async (etiquetaId: string) => {
+    if (!editing) {
+      toast.error("Salve o veículo primeiro para aplicar etiquetas.");
+      return;
+    }
+    const jaTem = selecionadas.includes(etiquetaId);
+    const { error } = jaTem
+      ? await supabase
+          .from("veiculo_etiquetas")
+          .delete()
+          .eq("veiculo_id", editing.id)
+          .eq("etiqueta_id", etiquetaId)
+      : await supabase
+          .from("veiculo_etiquetas")
+          .insert({ veiculo_id: editing.id, etiqueta_id: etiquetaId });
+    if (error) {
+      toast.error(`Não foi possível atualizar a etiqueta: ${error.message}`);
+      return;
+    }
+    setSelecionadas((s) => (jaTem ? s.filter((x) => x !== etiquetaId) : [...s, etiquetaId]));
+    qc.invalidateQueries({ queryKey: ["veiculo_etiquetas"] });
+  };
 
   useEffect(() => {
     let ativo = true;
@@ -543,9 +602,11 @@ function VeiculoDialog({
       toast.error("Salve o veículo primeiro para anexar as fotos.");
       return;
     }
-    const espaco = MAX_FOTOS - fotos.length;
+    const espaco = limite - fotos.length;
     if (espaco <= 0) {
-      toast.error(`Você pode anexar no máximo ${MAX_FOTOS} fotos por veículo.`);
+      toast.error(
+        `Limite de ${limite} anexo(s) atingido. Use "Adicionar mais espaço de foto" para liberar outro.`,
+      );
       return;
     }
     setEnviando(true);
@@ -585,6 +646,7 @@ function VeiculoDialog({
       departamento: string | null;
       placa: string;
       status: StatusVeiculo;
+      observacao: string | null;
     }) => {
       if (editing) {
         const { error } = await supabase.from("veiculos").update(form).eq("id", editing.id);
@@ -617,6 +679,15 @@ function VeiculoDialog({
       toast.error("Informe a placa do veículo.");
       return;
     }
+    const repetida = veiculos.find(
+      (v) => (v.placa || "").trim().toUpperCase() === placa && v.id !== editing?.id,
+    );
+    if (repetida) {
+      toast.error("Placa já cadastrada no sistema", {
+        description: `A placa ${placa} pertence ao veículo ${veiculoTitulo(repetida)} (ID ${repetida.codigo || repetida.nome || "—"}). Corrija a placa para continuar.`,
+      });
+      return;
+    }
     const texto = (k: string) => {
       const v = String(fd.get(k) || "").trim();
       return v || null;
@@ -628,6 +699,7 @@ function VeiculoDialog({
       cor: texto("cor"),
       marca_modelo: texto("marca_modelo"),
       departamento: texto("departamento"),
+      observacao: texto("observacao"),
       status,
     });
   };
@@ -708,13 +780,57 @@ function VeiculoDialog({
             </Select>
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="observacao">Observação (opcional)</Label>
+            <Textarea
+              id="observacao"
+              name="observacao"
+              rows={3}
+              placeholder="Anote aqui qualquer informação extra sobre o veículo"
+              defaultValue={editing?.observacao ?? ""}
+            />
+          </div>
+
+          <div className="space-y-2 border-t pt-4">
+            <Label>Etiquetas</Label>
+            {etiquetas.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                Nenhuma etiqueta criada ainda. Use o botão "Etiquetas" na lista de veículos.
+              </p>
+            ) : !editing ? (
+              <p className="text-xs text-muted-foreground">
+                Salve o veículo para aplicar etiquetas.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {etiquetas.map((e) => {
+                  const ativa = selecionadas.includes(e.id);
+                  return (
+                    <button
+                      key={e.id}
+                      type="button"
+                      onClick={() => alternarEtiqueta(e.id)}
+                      className={cn(
+                        "text-sm px-3 py-1.5 rounded-full border flex items-center gap-2",
+                        ativa ? "bg-accent border-foreground/30" : "text-muted-foreground",
+                      )}
+                    >
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: e.cor }} />
+                      {e.nome}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           <div className="space-y-2 border-t pt-4">
             <Label>
-              Fotos do veículo ({fotos.length}/{MAX_FOTOS})
+              Anexos do veículo — fotos ou PDF ({fotos.length}/{limite})
             </Label>
             {!editing ? (
               <p className="text-xs text-muted-foreground">
-                Salve o veículo para poder anexar as fotos.
+                Salve o veículo para poder anexar as fotos ou PDFs.
               </p>
             ) : (
               <>
@@ -722,12 +838,25 @@ function VeiculoDialog({
                   {fotos.map((path, i) => (
                     <div key={path} className="relative rounded-md overflow-hidden border">
                       {urls[i] ? (
-                        <img
-                          src={urls[i]}
-                          alt={`Foto ${i + 1} do veículo ${veiculoLabel(editing)}`}
-                          className="w-full h-32 object-cover"
-                          loading="lazy"
-                        />
+                        <button
+                          type="button"
+                          onClick={() => setAnexoAberto({ url: urls[i], path })}
+                          className="block w-full"
+                          title="Ver em tamanho ampliado"
+                        >
+                          {isPdf(path) ? (
+                            <span className="flex h-32 w-full items-center justify-center gap-2 bg-muted text-xs font-medium">
+                              <FileText className="h-4 w-4" /> Ver PDF
+                            </span>
+                          ) : (
+                            <img
+                              src={urls[i]}
+                              alt={`Anexo ${i + 1} do veículo ${veiculoLabel(editing)}`}
+                              className="w-full h-32 object-cover"
+                              loading="lazy"
+                            />
+                          )}
+                        </button>
                       ) : (
                         <div className="w-full h-32 bg-muted" />
                       )}
@@ -742,12 +871,12 @@ function VeiculoDialog({
                     </div>
                   ))}
                 </div>
-                {fotos.length < MAX_FOTOS && (
+                {fotos.length < limite && (
                   <div className="flex flex-wrap gap-2">
                     <input
                       ref={cameraRef}
                       type="file"
-                      accept="image/*"
+                      accept={ANEXO_ACCEPT}
                       capture="environment"
                       className="hidden"
                       onChange={(e) => handleFiles(e.target.files)}
@@ -755,7 +884,7 @@ function VeiculoDialog({
                     <input
                       ref={galeriaRef}
                       type="file"
-                      accept="image/*"
+                      accept={ANEXO_ACCEPT}
                       multiple
                       className="hidden"
                       onChange={(e) => handleFiles(e.target.files)}
@@ -780,7 +909,16 @@ function VeiculoDialog({
                     </Button>
                   </div>
                 )}
-                {enviando && <p className="text-xs text-muted-foreground">Enviando foto...</p>}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="gap-2 h-10 w-full"
+                  onClick={liberarEspaco}
+                >
+                  <Plus className="h-4 w-4" /> Adicionar mais espaço de foto
+                </Button>
+                {enviando && <p className="text-xs text-muted-foreground">Enviando anexo...</p>}
+                <AnexoViewer anexo={anexoAberto} onClose={() => setAnexoAberto(null)} />
               </>
             )}
           </div>
@@ -1008,6 +1146,123 @@ function ImportarDialog({
                 : "Escolher planilha e adicionar"}
           </Button>
         </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EtiquetasDialog({
+  open,
+  onOpenChange,
+  etiquetas,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  etiquetas: Etiqueta[];
+}) {
+  const qc = useQueryClient();
+  const [nome, setNome] = useState("");
+  const [cor, setCor] = useState("#2563eb");
+
+  const criar = useMutation({
+    mutationFn: async () => {
+      const n = nome.trim();
+      if (!n) throw new Error("Informe o nome da etiqueta.");
+      const { error } = await supabase.from("etiquetas").insert({ nome: n, cor });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Etiqueta criada");
+      setNome("");
+      qc.invalidateQueries({ queryKey: ["etiquetas"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const excluir = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("etiquetas").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Etiqueta excluída");
+      qc.invalidateQueries({ queryKey: ["etiquetas"] });
+      qc.invalidateQueries({ queryKey: ["veiculo_etiquetas"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Etiquetas</DialogTitle>
+          <DialogDescription>
+            Crie etiquetas com nome e cor. Depois aplique nos veículos ao abrir o cadastro.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="flex gap-2 items-end">
+            <div className="flex-1 space-y-2">
+              <Label htmlFor="etiqueta-nome">Nome</Label>
+              <Input
+                id="etiqueta-nome"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                placeholder="Ex.: Precisa revisão"
+                className="h-11"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="etiqueta-cor">Cor</Label>
+              <Input
+                id="etiqueta-cor"
+                type="color"
+                value={cor}
+                onChange={(e) => setCor(e.target.value)}
+                className="h-11 w-16 p-1"
+              />
+            </div>
+            <Button
+              type="button"
+              onClick={() => criar.mutate()}
+              disabled={criar.isPending}
+              className="h-11 gap-1"
+            >
+              <Plus className="h-4 w-4" /> Criar
+            </Button>
+          </div>
+
+          {etiquetas.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhuma etiqueta criada ainda.</p>
+          ) : (
+            <div className="divide-y border rounded-md">
+              {etiquetas.map((e) => (
+                <div key={e.id} className="flex items-center gap-3 p-3">
+                  <span
+                    className="h-3.5 w-3.5 rounded-full border"
+                    style={{ backgroundColor: e.cor }}
+                  />
+                  <span className="flex-1 text-sm">{e.nome}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Excluir etiqueta ${e.nome}`}
+                    onClick={() => excluir.mutate(e.id)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Fechar
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
