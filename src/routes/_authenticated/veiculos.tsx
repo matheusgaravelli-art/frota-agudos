@@ -1148,3 +1148,120 @@ function ImportarDialog({
     </Dialog>
   );
 }
+
+function EtiquetasDialog({
+  open,
+  onOpenChange,
+  etiquetas,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  etiquetas: Etiqueta[];
+}) {
+  const qc = useQueryClient();
+  const [nome, setNome] = useState("");
+  const [cor, setCor] = useState("#2563eb");
+
+  const criar = useMutation({
+    mutationFn: async () => {
+      const n = nome.trim();
+      if (!n) throw new Error("Informe o nome da etiqueta.");
+      const { error } = await supabase.from("etiquetas").insert({ nome: n, cor });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Etiqueta criada");
+      setNome("");
+      qc.invalidateQueries({ queryKey: ["etiquetas"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const excluir = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("etiquetas").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Etiqueta excluída");
+      qc.invalidateQueries({ queryKey: ["etiquetas"] });
+      qc.invalidateQueries({ queryKey: ["veiculo_etiquetas"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Etiquetas</DialogTitle>
+          <DialogDescription>
+            Crie etiquetas com nome e cor. Depois aplique nos veículos ao abrir o cadastro.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="flex gap-2 items-end">
+            <div className="flex-1 space-y-2">
+              <Label htmlFor="etiqueta-nome">Nome</Label>
+              <Input
+                id="etiqueta-nome"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                placeholder="Ex.: Precisa revisão"
+                className="h-11"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="etiqueta-cor">Cor</Label>
+              <Input
+                id="etiqueta-cor"
+                type="color"
+                value={cor}
+                onChange={(e) => setCor(e.target.value)}
+                className="h-11 w-16 p-1"
+              />
+            </div>
+            <Button
+              type="button"
+              onClick={() => criar.mutate()}
+              disabled={criar.isPending}
+              className="h-11 gap-1"
+            >
+              <Plus className="h-4 w-4" /> Criar
+            </Button>
+          </div>
+
+          {etiquetas.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhuma etiqueta criada ainda.</p>
+          ) : (
+            <div className="divide-y border rounded-md">
+              {etiquetas.map((e) => (
+                <div key={e.id} className="flex items-center gap-3 p-3">
+                  <span
+                    className="h-3.5 w-3.5 rounded-full border"
+                    style={{ backgroundColor: e.cor }}
+                  />
+                  <span className="flex-1 text-sm">{e.nome}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Excluir etiqueta ${e.nome}`}
+                    onClick={() => excluir.mutate(e.id)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Fechar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
