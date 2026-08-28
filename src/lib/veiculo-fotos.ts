@@ -15,6 +15,15 @@ export function nomeAnexo(path: string) {
   return base.replace(/^\d+-[a-z0-9]{1,8}\./i, "arquivo.");
 }
 
+/** URL assinada de um único anexo (foto ou PDF). */
+export async function getFotoUrl(path: string) {
+  const { data, error } = await supabase.storage
+    .from(FOTOS_BUCKET)
+    .createSignedUrl(path, 60 * 60);
+  if (error) throw error;
+  return data?.signedUrl ?? "";
+}
+
 export async function uploadFoto(veiculoId: string, file: File) {
   const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
   const path = `${veiculoId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
