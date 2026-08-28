@@ -96,6 +96,8 @@ export type Motorista = {
   id: string;
   nome: string;
   contato: string | null;
+  departamento: string | null;
+  cnh_path: string | null;
   created_at: string;
   updated_at: string;
 };
