@@ -510,6 +510,9 @@ function VeiculoDialog({
 }) {
   const qc = useQueryClient();
   const [status, setStatus] = useState<StatusVeiculo>(editing?.status ?? "ativo");
+  const [departamento, setDepartamento] = useState<string>(
+    DEPARTAMENTOS.find((d) => d === (editing?.departamento ?? "")) ?? "",
+  );
   const [fotos, setFotos] = useState<string[]>(editing?.fotos ?? []);
   const [limite, setLimite] = useState<number>(editing?.max_anexos ?? MAX_FOTOS);
   const [selecionadas, setSelecionadas] = useState<string[]>([]);
