@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
+  DEPARTAMENTOS,
   listVeiculos,
   listCustos,
   listEtiquetas,
