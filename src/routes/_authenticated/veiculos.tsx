@@ -757,13 +757,19 @@ function VeiculoDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="departamento">Dep. (secretaria responsável)</Label>
-              <Input
-                id="departamento"
-                name="departamento"
-                className="h-11"
-                defaultValue={editing?.departamento ?? ""}
-              />
+              <Label>Dep. (secretaria responsável)</Label>
+              <Select value={departamento} onValueChange={setDepartamento}>
+                <SelectTrigger className="h-11">
+                  <SelectValue placeholder="Selecione a secretaria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {DEPARTAMENTOS.map((d) => (
+                    <SelectItem key={d} value={d}>
+                      {d}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <div className="space-y-2">
