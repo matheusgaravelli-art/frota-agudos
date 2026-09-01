@@ -36,6 +36,23 @@ export type VeiculoEtiqueta = {
   etiqueta_id: string;
 };
 
+/** Lista fixa de secretarias/departamentos do cadastro de veículos. */
+export const DEPARTAMENTOS = [
+  "Secretaria de Administração e Finanças",
+  "Secretaria de Segurança Pública",
+  "Secretaria de Saúde",
+  "Secretaria de Educação e Cultura",
+  "Secretaria de Serviços Urbanos e Mobilidade",
+  "Secretaria de Obras e Infraestrutura",
+  "Secretaria de Agricultura",
+  "Secretaria de Planejamento Urbano e Meio Ambiente",
+  "Secretaria de Esporte e Lazer",
+  "Secretaria de Assistência Social e Cidadania",
+  "Gabinete do Prefeito",
+] as const;
+
+export type Departamento = (typeof DEPARTAMENTOS)[number];
+
 export function veiculoLabel(v: { codigo?: string | null; nome?: string | null; placa?: string }) {
   return v.codigo || v.nome || v.placa || "Veículo";
 }

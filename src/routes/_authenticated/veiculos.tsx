@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
+  DEPARTAMENTOS,
   listVeiculos,
   listCustos,
   listEtiquetas,
@@ -509,6 +510,9 @@ function VeiculoDialog({
 }) {
   const qc = useQueryClient();
   const [status, setStatus] = useState<StatusVeiculo>(editing?.status ?? "ativo");
+  const [departamento, setDepartamento] = useState<string>(
+    DEPARTAMENTOS.find((d) => d === (editing?.departamento ?? "")) ?? "",
+  );
   const [fotos, setFotos] = useState<string[]>(editing?.fotos ?? []);
   const [limite, setLimite] = useState<number>(editing?.max_anexos ?? MAX_FOTOS);
   const [selecionadas, setSelecionadas] = useState<string[]>([]);
@@ -698,7 +702,7 @@ function VeiculoDialog({
       tipo: texto("tipo"),
       cor: texto("cor"),
       marca_modelo: texto("marca_modelo"),
-      departamento: texto("departamento"),
+      departamento: departamento || null,
       observacao: texto("observacao"),
       status,
     });
@@ -757,13 +761,19 @@ function VeiculoDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="departamento">Dep. (secretaria responsável)</Label>
-              <Input
-                id="departamento"
-                name="departamento"
-                className="h-11"
-                defaultValue={editing?.departamento ?? ""}
-              />
+              <Label>Dep. (secretaria responsável)</Label>
+              <Select value={departamento} onValueChange={setDepartamento}>
+                <SelectTrigger className="h-11">
+                  <SelectValue placeholder="Selecione a secretaria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {DEPARTAMENTOS.map((d) => (
+                    <SelectItem key={d} value={d}>
+                      {d}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <div className="space-y-2">
