@@ -702,7 +702,7 @@ function VeiculoDialog({
       tipo: texto("tipo"),
       cor: texto("cor"),
       marca_modelo: texto("marca_modelo"),
-      departamento: texto("departamento"),
+      departamento: departamento || null,
       observacao: texto("observacao"),
       status,
     });
