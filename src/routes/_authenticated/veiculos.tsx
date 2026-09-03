@@ -707,11 +707,11 @@ function VeiculoDialog({
     submit.mutate({
       codigo,
       placa,
-      tipo: texto("tipo"),
-      cor: texto("cor"),
-      marca_modelo: texto("marca_modelo"),
+      tipo,
+      cor,
+      marca_modelo,
       departamento: departamento || null,
-      observacao: texto("observacao"),
+      observacao,
       status,
     });
   };
