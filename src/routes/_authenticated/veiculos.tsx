@@ -678,27 +678,32 @@ function VeiculoDialog({
     const placa = String(fd.get("placa") || "")
       .trim()
       .toUpperCase();
-    if (!codigo) {
-      toast.error("Informe o ID do veículo.");
-      return;
-    }
-    if (!placa) {
-      toast.error("Informe a placa do veículo.");
-      return;
-    }
-    const repetida = veiculos.find(
-      (v) => (v.placa || "").trim().toUpperCase() === placa && v.id !== editing?.id,
-    );
-    if (repetida) {
-      toast.error("Placa já cadastrada no sistema", {
-        description: `A placa ${placa} pertence ao veículo ${veiculoTitulo(repetida)} (ID ${repetida.codigo || repetida.nome || "—"}). Corrija a placa para continuar.`,
-      });
-      return;
-    }
     const texto = (k: string) => {
       const v = String(fd.get(k) || "").trim();
       return v || null;
     };
+    const tipo = texto("tipo");
+    const cor = texto("cor");
+    const marca_modelo = texto("marca_modelo");
+    const observacao = texto("observacao");
+    const algumPreenchido = [codigo, placa, tipo, cor, marca_modelo, departamento, observacao].some(
+      (v) => v && String(v).trim(),
+    );
+    if (!algumPreenchido) {
+      toast.error("Preencha ao menos um campo para salvar o veículo.");
+      return;
+    }
+    if (placa) {
+      const repetida = veiculos.find(
+        (v) => (v.placa || "").trim().toUpperCase() === placa && v.id !== editing?.id,
+      );
+      if (repetida) {
+        toast.error("Placa já cadastrada no sistema", {
+          description: `A placa ${placa} pertence ao veículo ${veiculoTitulo(repetida)} (ID ${repetida.codigo || repetida.nome || "—"}). Corrija a placa para continuar.`,
+        });
+        return;
+      }
+    }
     submit.mutate({
       codigo,
       placa,
