@@ -525,6 +525,9 @@ function VeiculoDialog({
   useEffect(() => {
     if (!open) return;
     setStatus(editing?.status ?? "ativo");
+    // Sempre reinicia o departamento com o valor do veículo aberto,
+    // para nunca herdar o departamento do veículo editado anteriormente.
+    setDepartamento(DEPARTAMENTOS.find((d) => d === (editing?.departamento ?? "")) ?? "");
     setFotos(editing?.fotos ?? []);
     setLimite(editing?.max_anexos ?? MAX_FOTOS);
     if (editing) {
