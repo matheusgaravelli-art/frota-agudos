@@ -194,6 +194,22 @@ export async function listEtiquetas() {
   return data as Etiqueta[];
 }
 
+export type Lembrete = {
+  id: string;
+  titulo: string;
+  data: string;
+  observacao: string | null;
+  concluido: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export async function listLembretes() {
+  const { data, error } = await supabase.from("lembretes").select("*").order("data");
+  if (error) throw error;
+  return data as Lembrete[];
+}
+
 export async function listVeiculoEtiquetas() {
   const { data, error } = await supabase.from("veiculo_etiquetas").select("veiculo_id, etiqueta_id");
   if (error) throw error;

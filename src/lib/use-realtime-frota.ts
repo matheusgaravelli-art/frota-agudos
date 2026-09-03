@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-const TABELAS = ["veiculos", "custos", "documentos", "manutencoes", "motoristas"] as const;
+const TABELAS = ["veiculos", "custos", "documentos", "manutencoes", "motoristas", "lembretes"] as const;
 
 /**
  * Mantém as telas sincronizadas em tempo real entre dispositivos:
