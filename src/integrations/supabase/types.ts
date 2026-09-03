@@ -120,6 +120,36 @@ export type Database = {
         }
         Relationships: []
       }
+      lembretes: {
+        Row: {
+          concluido: boolean
+          created_at: string
+          data: string
+          id: string
+          observacao: string | null
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          concluido?: boolean
+          created_at?: string
+          data: string
+          id?: string
+          observacao?: string | null
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          concluido?: boolean
+          created_at?: string
+          data?: string
+          id?: string
+          observacao?: string | null
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       manutencoes: {
         Row: {
           created_at: string
