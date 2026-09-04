@@ -9,11 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedVencimentosRouteImport } from './routes/_authenticated/vencimentos'
 import { Route as AuthenticatedVeiculosRouteImport } from './routes/_authenticated/veiculos'
+import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedMotoristasRouteImport } from './routes/_authenticated/motoristas'
@@ -22,6 +24,11 @@ import { Route as AuthenticatedCustosRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedBuscaRouteImport } from './routes/_authenticated/busca'
 import { Route as AuthenticatedAvisosRouteImport } from './routes/_authenticated/avisos'
 
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -45,6 +52,11 @@ const AuthenticatedVencimentosRoute =
 const AuthenticatedVeiculosRoute = AuthenticatedVeiculosRouteImport.update({
   id: '/veiculos',
   path: '/veiculos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedUsuariosRoute = AuthenticatedUsuariosRouteImport.update({
+  id: '/usuarios',
+  path: '/usuarios',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
@@ -87,6 +99,7 @@ const AuthenticatedAvisosRoute = AuthenticatedAvisosRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/avisos': typeof AuthenticatedAvisosRoute
   '/busca': typeof AuthenticatedBuscaRoute
   '/custos': typeof AuthenticatedCustosRoute
@@ -94,12 +107,14 @@ export interface FileRoutesByFullPath {
   '/motoristas': typeof AuthenticatedMotoristasRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/usuarios': typeof AuthenticatedUsuariosRoute
   '/veiculos': typeof AuthenticatedVeiculosRoute
   '/vencimentos': typeof AuthenticatedVencimentosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/avisos': typeof AuthenticatedAvisosRoute
   '/busca': typeof AuthenticatedBuscaRoute
   '/custos': typeof AuthenticatedCustosRoute
@@ -107,6 +122,7 @@ export interface FileRoutesByTo {
   '/motoristas': typeof AuthenticatedMotoristasRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/usuarios': typeof AuthenticatedUsuariosRoute
   '/veiculos': typeof AuthenticatedVeiculosRoute
   '/vencimentos': typeof AuthenticatedVencimentosRoute
 }
@@ -115,6 +131,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/avisos': typeof AuthenticatedAvisosRoute
   '/_authenticated/busca': typeof AuthenticatedBuscaRoute
   '/_authenticated/custos': typeof AuthenticatedCustosRoute
@@ -122,6 +139,7 @@ export interface FileRoutesById {
   '/_authenticated/motoristas': typeof AuthenticatedMotoristasRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
   '/_authenticated/veiculos': typeof AuthenticatedVeiculosRoute
   '/_authenticated/vencimentos': typeof AuthenticatedVencimentosRoute
 }
@@ -130,6 +148,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/reset-password'
     | '/avisos'
     | '/busca'
     | '/custos'
@@ -137,12 +156,14 @@ export interface FileRouteTypes {
     | '/motoristas'
     | '/painel'
     | '/relatorios'
+    | '/usuarios'
     | '/veiculos'
     | '/vencimentos'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/reset-password'
     | '/avisos'
     | '/busca'
     | '/custos'
@@ -150,6 +171,7 @@ export interface FileRouteTypes {
     | '/motoristas'
     | '/painel'
     | '/relatorios'
+    | '/usuarios'
     | '/veiculos'
     | '/vencimentos'
   id:
@@ -157,6 +179,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/reset-password'
     | '/_authenticated/avisos'
     | '/_authenticated/busca'
     | '/_authenticated/custos'
@@ -164,6 +187,7 @@ export interface FileRouteTypes {
     | '/_authenticated/motoristas'
     | '/_authenticated/painel'
     | '/_authenticated/relatorios'
+    | '/_authenticated/usuarios'
     | '/_authenticated/veiculos'
     | '/_authenticated/vencimentos'
   fileRoutesById: FileRoutesById
@@ -172,10 +196,18 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -209,6 +241,13 @@ declare module '@tanstack/react-router' {
       path: '/veiculos'
       fullPath: '/veiculos'
       preLoaderRoute: typeof AuthenticatedVeiculosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/usuarios': {
+      id: '/_authenticated/usuarios'
+      path: '/usuarios'
+      fullPath: '/usuarios'
+      preLoaderRoute: typeof AuthenticatedUsuariosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/relatorios': {
@@ -271,6 +310,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMotoristasRoute: typeof AuthenticatedMotoristasRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
+  AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
   AuthenticatedVeiculosRoute: typeof AuthenticatedVeiculosRoute
   AuthenticatedVencimentosRoute: typeof AuthenticatedVencimentosRoute
 }
@@ -283,6 +323,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMotoristasRoute: AuthenticatedMotoristasRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
+  AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
   AuthenticatedVeiculosRoute: AuthenticatedVeiculosRoute,
   AuthenticatedVencimentosRoute: AuthenticatedVencimentosRoute,
 }
@@ -294,6 +335,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

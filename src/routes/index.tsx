@@ -28,7 +28,7 @@ function LandingPage() {
           </p>
         </div>
         <Button asChild size="lg" className="w-full h-12 text-base">
-          <Link to="/painel">Acessar o sistema</Link>
+          <Link to="/auth">Entrar no sistema</Link>
         </Button>
       </div>
     </div>
