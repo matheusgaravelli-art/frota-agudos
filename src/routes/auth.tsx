@@ -39,7 +39,7 @@ function AuthPage() {
     if (!email.trim()) return toast.error("Informe seu e-mail.");
     if (!senha) return toast.error("Informe sua senha.");
     setEnviando(true);
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), senha: undefined as never, password: senha });
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: senha });
     setEnviando(false);
     if (error) {
       toast.error(
