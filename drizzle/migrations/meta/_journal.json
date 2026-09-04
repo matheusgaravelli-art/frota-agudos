@@ -8,6 +8,13 @@
       "when": 1788461607486,
       "tag": "0000_create_lembretes",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788533420983,
+      "tag": "0001_add_auth_roles",
+      "breakpoints": true
     }
   ]
 }
