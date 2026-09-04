@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedVencimentosRouteImport } from './routes/_authenticated/vencimentos'
 import { Route as AuthenticatedVeiculosRouteImport } from './routes/_authenticated/veiculos'
+import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedMotoristasRouteImport } from './routes/_authenticated/motoristas'
@@ -51,6 +52,11 @@ const AuthenticatedVencimentosRoute =
 const AuthenticatedVeiculosRoute = AuthenticatedVeiculosRouteImport.update({
   id: '/veiculos',
   path: '/veiculos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedUsuariosRoute = AuthenticatedUsuariosRouteImport.update({
+  id: '/usuarios',
+  path: '/usuarios',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
@@ -101,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/motoristas': typeof AuthenticatedMotoristasRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/usuarios': typeof AuthenticatedUsuariosRoute
   '/veiculos': typeof AuthenticatedVeiculosRoute
   '/vencimentos': typeof AuthenticatedVencimentosRoute
 }
@@ -115,6 +122,7 @@ export interface FileRoutesByTo {
   '/motoristas': typeof AuthenticatedMotoristasRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/usuarios': typeof AuthenticatedUsuariosRoute
   '/veiculos': typeof AuthenticatedVeiculosRoute
   '/vencimentos': typeof AuthenticatedVencimentosRoute
 }
@@ -131,6 +139,7 @@ export interface FileRoutesById {
   '/_authenticated/motoristas': typeof AuthenticatedMotoristasRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
   '/_authenticated/veiculos': typeof AuthenticatedVeiculosRoute
   '/_authenticated/vencimentos': typeof AuthenticatedVencimentosRoute
 }
@@ -147,6 +156,7 @@ export interface FileRouteTypes {
     | '/motoristas'
     | '/painel'
     | '/relatorios'
+    | '/usuarios'
     | '/veiculos'
     | '/vencimentos'
   fileRoutesByTo: FileRoutesByTo
@@ -161,6 +171,7 @@ export interface FileRouteTypes {
     | '/motoristas'
     | '/painel'
     | '/relatorios'
+    | '/usuarios'
     | '/veiculos'
     | '/vencimentos'
   id:
@@ -176,6 +187,7 @@ export interface FileRouteTypes {
     | '/_authenticated/motoristas'
     | '/_authenticated/painel'
     | '/_authenticated/relatorios'
+    | '/_authenticated/usuarios'
     | '/_authenticated/veiculos'
     | '/_authenticated/vencimentos'
   fileRoutesById: FileRoutesById
@@ -229,6 +241,13 @@ declare module '@tanstack/react-router' {
       path: '/veiculos'
       fullPath: '/veiculos'
       preLoaderRoute: typeof AuthenticatedVeiculosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/usuarios': {
+      id: '/_authenticated/usuarios'
+      path: '/usuarios'
+      fullPath: '/usuarios'
+      preLoaderRoute: typeof AuthenticatedUsuariosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/relatorios': {
@@ -291,6 +310,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMotoristasRoute: typeof AuthenticatedMotoristasRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
+  AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
   AuthenticatedVeiculosRoute: typeof AuthenticatedVeiculosRoute
   AuthenticatedVencimentosRoute: typeof AuthenticatedVencimentosRoute
 }
@@ -303,6 +323,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMotoristasRoute: AuthenticatedMotoristasRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
+  AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
   AuthenticatedVeiculosRoute: AuthenticatedVeiculosRoute,
   AuthenticatedVencimentosRoute: AuthenticatedVencimentosRoute,
 }

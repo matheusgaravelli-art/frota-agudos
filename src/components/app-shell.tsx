@@ -13,11 +13,17 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
+  ShieldCheck,
+  LogOut,
 } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { usePapel, useSessao } from "@/lib/auth";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const nav = [
   { to: "/painel", label: "Painel", icon: LayoutDashboard },
@@ -30,12 +36,25 @@ const nav = [
   { to: "/relatorios", label: "Relatórios", icon: FileText },
 ] as const;
 
+const navAdmin = [{ to: "/usuarios", label: "Usuários", icon: ShieldCheck }] as const;
+
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [compacta, setCompacta] = useState(false);
   const [q, setQ] = useState("");
+  const { ehAdmin } = usePapel();
+  const { usuario } = useSessao();
+  const queryClient = useQueryClient();
+
+  const sair = async () => {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await supabase.auth.signOut();
+    toast.success("Você saiu do sistema.");
+    navigate({ to: "/auth", replace: true });
+  };
 
   const submitBusca = (e: FormEvent) => {
     e.preventDefault();
@@ -58,6 +77,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           onNavigate={() => {}}
           compacta={compacta}
           onToggleCompacta={() => setCompacta((c) => !c)}
+          ehAdmin={ehAdmin}
+          email={usuario?.email ?? null}
+          onSair={sair}
         />
       </aside>
 
@@ -65,7 +87,14 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="md:hidden fixed inset-0 z-50 flex">
           <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
           <aside className="relative w-64 bg-sidebar text-sidebar-foreground flex flex-col">
-            <SidebarInner pathname={pathname} onNavigate={() => setMobileOpen(false)} compacta={false} />
+            <SidebarInner
+              pathname={pathname}
+              onNavigate={() => setMobileOpen(false)}
+              compacta={false}
+              ehAdmin={ehAdmin}
+              email={usuario?.email ?? null}
+              onSair={sair}
+            />
           </aside>
         </div>
       )}
@@ -103,12 +132,19 @@ function SidebarInner({
   onNavigate,
   compacta,
   onToggleCompacta,
+  ehAdmin,
+  email,
+  onSair,
 }: {
   pathname: string;
   onNavigate: () => void;
   compacta: boolean;
   onToggleCompacta?: () => void;
+  ehAdmin?: boolean;
+  email?: string | null;
+  onSair?: () => void;
 }) {
+  const itens = ehAdmin ? [...nav, ...navAdmin] : nav;
   return (
     <>
       <div
@@ -136,7 +172,7 @@ function SidebarInner({
         )}
       </div>
       <nav className={cn("flex-1 space-y-1 overflow-y-auto", compacta ? "p-2" : "p-3")}>
-        {nav.map((item) => {
+        {itens.map((item) => {
           const active = pathname === item.to || pathname.startsWith(item.to + "/");
           const Icon = item.icon;
           return (
@@ -159,6 +195,25 @@ function SidebarInner({
           );
         })}
       </nav>
+      <div className={cn("border-t border-sidebar-border", compacta ? "p-2" : "p-3")}>
+        {!compacta && email && (
+          <p className="px-2 pb-2 text-xs text-sidebar-foreground/60 truncate" title={email}>
+            {email}
+          </p>
+        )}
+        <button
+          type="button"
+          onClick={onSair}
+          title="Sair"
+          className={cn(
+            "flex w-full items-center gap-3 rounded-md text-sm font-medium text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+            compacta ? "justify-center px-0 py-3" : "px-3 py-2.5",
+          )}
+        >
+          <LogOut className="h-4 w-4 shrink-0" />
+          {!compacta && <span>Sair</span>}
+        </button>
+      </div>
     </>
   );
 }
