@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      acessos: {
+        Row: {
+          created_at: string
+          decidido_em: string | null
+          decidido_por: string | null
+          email: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          decidido_em?: string | null
+          decidido_por?: string | null
+          email?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          decidido_em?: string | null
+          decidido_por?: string | null
+          email?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      atividades: {
+        Row: {
+          acao: string
+          area: string
+          created_at: string
+          descricao: string | null
+          id: string
+          user_id: string | null
+          usuario_email: string | null
+        }
+        Insert: {
+          acao: string
+          area: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          user_id?: string | null
+          usuario_email?: string | null
+        }
+        Update: {
+          acao?: string
+          area?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          user_id?: string | null
+          usuario_email?: string | null
+        }
+        Relationships: []
+      }
       custos: {
         Row: {
           created_at: string
