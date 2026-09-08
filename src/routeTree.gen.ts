@@ -23,6 +23,8 @@ import { Route as AuthenticatedManutencoesRouteImport } from './routes/_authenti
 import { Route as AuthenticatedCustosRouteImport } from './routes/_authenticated/custos'
 import { Route as AuthenticatedBuscaRouteImport } from './routes/_authenticated/busca'
 import { Route as AuthenticatedAvisosRouteImport } from './routes/_authenticated/avisos'
+import { Route as AuthenticatedAtividadesRouteImport } from './routes/_authenticated/atividades'
+import { Route as AuthenticatedAprovacoesRouteImport } from './routes/_authenticated/aprovacoes'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -95,11 +97,23 @@ const AuthenticatedAvisosRoute = AuthenticatedAvisosRouteImport.update({
   path: '/avisos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAtividadesRoute = AuthenticatedAtividadesRouteImport.update({
+  id: '/atividades',
+  path: '/atividades',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAprovacoesRoute = AuthenticatedAprovacoesRouteImport.update({
+  id: '/aprovacoes',
+  path: '/aprovacoes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/aprovacoes': typeof AuthenticatedAprovacoesRoute
+  '/atividades': typeof AuthenticatedAtividadesRoute
   '/avisos': typeof AuthenticatedAvisosRoute
   '/busca': typeof AuthenticatedBuscaRoute
   '/custos': typeof AuthenticatedCustosRoute
@@ -115,6 +129,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/aprovacoes': typeof AuthenticatedAprovacoesRoute
+  '/atividades': typeof AuthenticatedAtividadesRoute
   '/avisos': typeof AuthenticatedAvisosRoute
   '/busca': typeof AuthenticatedBuscaRoute
   '/custos': typeof AuthenticatedCustosRoute
@@ -132,6 +148,8 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/aprovacoes': typeof AuthenticatedAprovacoesRoute
+  '/_authenticated/atividades': typeof AuthenticatedAtividadesRoute
   '/_authenticated/avisos': typeof AuthenticatedAvisosRoute
   '/_authenticated/busca': typeof AuthenticatedBuscaRoute
   '/_authenticated/custos': typeof AuthenticatedCustosRoute
@@ -149,6 +167,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/reset-password'
+    | '/aprovacoes'
+    | '/atividades'
     | '/avisos'
     | '/busca'
     | '/custos'
@@ -164,6 +184,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/reset-password'
+    | '/aprovacoes'
+    | '/atividades'
     | '/avisos'
     | '/busca'
     | '/custos'
@@ -180,6 +202,8 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/reset-password'
+    | '/_authenticated/aprovacoes'
+    | '/_authenticated/atividades'
     | '/_authenticated/avisos'
     | '/_authenticated/busca'
     | '/_authenticated/custos'
@@ -299,10 +323,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAvisosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/atividades': {
+      id: '/_authenticated/atividades'
+      path: '/atividades'
+      fullPath: '/atividades'
+      preLoaderRoute: typeof AuthenticatedAtividadesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/aprovacoes': {
+      id: '/_authenticated/aprovacoes'
+      path: '/aprovacoes'
+      fullPath: '/aprovacoes'
+      preLoaderRoute: typeof AuthenticatedAprovacoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAprovacoesRoute: typeof AuthenticatedAprovacoesRoute
+  AuthenticatedAtividadesRoute: typeof AuthenticatedAtividadesRoute
   AuthenticatedAvisosRoute: typeof AuthenticatedAvisosRoute
   AuthenticatedBuscaRoute: typeof AuthenticatedBuscaRoute
   AuthenticatedCustosRoute: typeof AuthenticatedCustosRoute
@@ -316,6 +356,8 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAprovacoesRoute: AuthenticatedAprovacoesRoute,
+  AuthenticatedAtividadesRoute: AuthenticatedAtividadesRoute,
   AuthenticatedAvisosRoute: AuthenticatedAvisosRoute,
   AuthenticatedBuscaRoute: AuthenticatedBuscaRoute,
   AuthenticatedCustosRoute: AuthenticatedCustosRoute,
