@@ -48,3 +48,31 @@ export function usePapel() {
 
   return { papel: q.data, ehAdmin: q.data === "admin", carregando: q.isLoading };
 }
+
+export type StatusAcesso = "pendente" | "aprovado" | "recusado";
+
+export function useAcesso() {
+  const { usuario, carregando: carregandoSessao } = useSessao();
+  const userId = usuario?.id;
+
+  const q = useQuery({
+    queryKey: ["acesso", userId],
+    enabled: !!userId,
+    staleTime: 30 * 1000,
+    queryFn: async (): Promise<StatusAcesso> => {
+      const { data, error } = await supabase
+        .from("acessos")
+        .select("status")
+        .eq("user_id", userId!)
+        .maybeSingle();
+      if (error) throw error;
+      return ((data?.status as StatusAcesso) ?? "pendente");
+    },
+  });
+
+  return {
+    status: q.data,
+    aprovado: q.data === "aprovado",
+    carregando: carregandoSessao || (!!userId && q.isLoading),
+  };
+}

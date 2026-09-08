@@ -57,6 +57,12 @@ export const criarUsuario = createServerFn({ method: "POST" })
       email_confirm: true,
     });
     if (error) throw new Error(error.message);
+    await supabaseAdmin
+      .from("acessos")
+      .upsert(
+        { user_id: criado.user.id, email: data.email, status: "aprovado", decidido_em: new Date().toISOString(), decidido_por: context.userId },
+        { onConflict: "user_id" },
+      );
     await supabaseAdmin.from("user_roles").delete().eq("user_id", criado.user.id);
     const { error: erroPapel } = await supabaseAdmin
       .from("user_roles")
@@ -103,6 +109,52 @@ export const enviarRedefinicao = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.auth.resetPasswordForEmail(data.email, {
       redirectTo: data.redirectTo,
     });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export type CadastroPendente = {
+  userId: string;
+  email: string;
+  status: "pendente" | "aprovado" | "recusado";
+  criadoEm: string;
+};
+
+export const listarCadastros = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<CadastroPendente[]> => {
+    await garantirAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("acessos")
+      .select("user_id, email, status, created_at")
+      .neq("status", "aprovado")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((a) => ({
+      userId: a.user_id,
+      email: a.email ?? "",
+      status: (a.status as CadastroPendente["status"]) ?? "pendente",
+      criadoEm: a.created_at,
+    }));
+  });
+
+export const decidirAcesso = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ userId: z.string().uuid(), status: z.enum(["aprovado", "recusado"]) }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    await garantirAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("acessos")
+      .update({
+        status: data.status,
+        decidido_em: new Date().toISOString(),
+        decidido_por: context.userId,
+      })
+      .eq("user_id", data.userId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
