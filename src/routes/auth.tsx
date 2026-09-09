@@ -23,7 +23,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [modo, setModo] = useState<"login" | "recuperar">("login");
+  const [modo, setModo] = useState<"login" | "cadastro" | "recuperar">("login");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -52,6 +52,29 @@ function AuthPage() {
     navigate({ to: "/painel", replace: true });
   };
 
+  const cadastrar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return toast.error("Informe seu e-mail.");
+    if (senha.length < 6) return toast.error("Crie uma senha com pelo menos 6 caracteres.");
+    setEnviando(true);
+    const { error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password: senha,
+      options: { emailRedirectTo: window.location.origin },
+    });
+    setEnviando(false);
+    if (error) {
+      toast.error(
+        error.message.toLowerCase().includes("already")
+          ? "Este e-mail já está cadastrado. Tente entrar ou recuperar a senha."
+          : `Não foi possível cadastrar: ${error.message}`,
+      );
+      return;
+    }
+    toast.success("Cadastro enviado! Aguarde a aprovação do administrador.");
+    navigate({ to: "/painel", replace: true });
+  };
+
   const recuperar = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return toast.error("Informe o e-mail cadastrado.");
@@ -77,15 +100,19 @@ function AuthPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">{modo === "login" ? "Entrar" : "Esqueci minha senha"}</CardTitle>
+            <CardTitle className="text-lg">
+              {modo === "login" ? "Entrar" : modo === "cadastro" ? "Criar cadastro" : "Esqueci minha senha"}
+            </CardTitle>
             <CardDescription>
               {modo === "login"
                 ? "Use seu e-mail e senha para acessar o sistema."
-                : "Informe seu e-mail e enviaremos um link para criar uma nova senha."}
+                : modo === "cadastro"
+                  ? "Crie seu acesso. O administrador precisa aprovar antes de você usar o sistema."
+                  : "Informe seu e-mail e enviaremos um link para criar uma nova senha."}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={modo === "login" ? entrar : recuperar} className="space-y-4">
+            <form onSubmit={modo === "login" ? entrar : modo === "cadastro" ? cadastrar : recuperar} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">E-mail</Label>
                 <Input
@@ -99,13 +126,13 @@ function AuthPage() {
                 />
               </div>
 
-              {modo === "login" && (
+              {modo !== "recuperar" && (
                 <div className="space-y-2">
                   <Label htmlFor="senha">Senha</Label>
                   <Input
                     id="senha"
                     type="password"
-                    autoComplete="current-password"
+                    autoComplete={modo === "cadastro" ? "new-password" : "current-password"}
                     value={senha}
                     onChange={(ev) => setSenha(ev.target.value)}
                     placeholder="••••••••"
@@ -116,17 +143,23 @@ function AuthPage() {
 
               <Button type="submit" className="w-full h-11 text-base" disabled={enviando}>
                 {enviando && <Loader2 className="h-4 w-4 animate-spin" />}
-                {modo === "login" ? "Entrar" : "Enviar link"}
+                {modo === "login" ? "Entrar" : modo === "cadastro" ? "Criar cadastro" : "Enviar link"}
               </Button>
 
-              <Button
-                type="button"
-                variant="link"
-                className="w-full"
-                onClick={() => setModo(modo === "login" ? "recuperar" : "login")}
-              >
-                {modo === "login" ? "Esqueci minha senha" : "Voltar para o login"}
-              </Button>
+              {modo === "login" ? (
+                <div className="flex flex-col">
+                  <Button type="button" variant="link" onClick={() => setModo("cadastro")}>
+                    Não tenho cadastro
+                  </Button>
+                  <Button type="button" variant="link" onClick={() => setModo("recuperar")}>
+                    Esqueci minha senha
+                  </Button>
+                </div>
+              ) : (
+                <Button type="button" variant="link" className="w-full" onClick={() => setModo("login")}>
+                  Voltar para o login
+                </Button>
+              )}
             </form>
           </CardContent>
         </Card>
