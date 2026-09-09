@@ -140,7 +140,7 @@ function VeiculosPage() {
 
   const deleteMut = useMutation({
     mutationFn: async (id: string) => {
-      const alvo = (veiculos.data ?? []).find((v) => v.id === id);
+      const alvo = veiculos.find((v) => v.id === id);
       const { error } = await supabase.from("veiculos").delete().eq("id", id);
       if (error) throw error;
       await registrarAtividade(
@@ -673,6 +673,11 @@ function VeiculoDialog({
       } else {
         const { error } = await supabase.from("veiculos").insert({ ...form, fotos: [] });
         if (error) throw error;
+        await registrarAtividade(
+          "veiculos",
+          "criacao",
+          `Veículo cadastrado: ${form.marca_modelo || "sem nome"} — placa ${form.placa || "-"}`,
+        );
       }
     },
     onSuccess: () => {
