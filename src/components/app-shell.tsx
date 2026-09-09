@@ -14,6 +14,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ShieldCheck,
+  UserCheck,
+  History,
   LogOut,
 } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
@@ -36,7 +38,11 @@ const nav = [
   { to: "/relatorios", label: "Relatórios", icon: FileText },
 ] as const;
 
-const navAdmin = [{ to: "/usuarios", label: "Usuários", icon: ShieldCheck }] as const;
+const navAdmin = [
+  { to: "/usuarios", label: "Usuários", icon: ShieldCheck },
+  { to: "/aprovacoes", label: "Aprovações", icon: UserCheck },
+  { to: "/atividades", label: "Histórico", icon: History },
+] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (r) => r.location.pathname });

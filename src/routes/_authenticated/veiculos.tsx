@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { registrarAtividade } from "@/lib/atividades";
 import {
   DEPARTAMENTOS,
   listVeiculos,
@@ -139,8 +140,14 @@ function VeiculosPage() {
 
   const deleteMut = useMutation({
     mutationFn: async (id: string) => {
+      const alvo = veiculos.find((v) => v.id === id);
       const { error } = await supabase.from("veiculos").delete().eq("id", id);
       if (error) throw error;
+      await registrarAtividade(
+        "veiculos",
+        "exclusao",
+        `Veículo removido: ${alvo?.marca_modelo || alvo?.nome || "sem nome"} — placa ${alvo?.placa ?? "-"}`,
+      );
     },
     onSuccess: () => {
       toast.success("Veículo removido");
@@ -658,9 +665,19 @@ function VeiculoDialog({
       if (editing) {
         const { error } = await supabase.from("veiculos").update(form).eq("id", editing.id);
         if (error) throw error;
+        await registrarAtividade(
+          "veiculos",
+          "edicao",
+          `Veículo editado: ${form.marca_modelo || "sem nome"} — placa ${form.placa || "-"}`,
+        );
       } else {
         const { error } = await supabase.from("veiculos").insert({ ...form, fotos: [] });
         if (error) throw error;
+        await registrarAtividade(
+          "veiculos",
+          "criacao",
+          `Veículo cadastrado: ${form.marca_modelo || "sem nome"} — placa ${form.placa || "-"}`,
+        );
       }
     },
     onSuccess: () => {

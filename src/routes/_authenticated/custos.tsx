@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { registrarAtividade } from "@/lib/atividades";
 import {
   listCustos,
   listVeiculos,
@@ -65,8 +66,14 @@ function CustosPage() {
 
   const deleteMut = useMutation({
     mutationFn: async (id: string) => {
+      const alvo = lista.find((c) => c.id === id);
       const { error } = await supabase.from("custos").delete().eq("id", id);
       if (error) throw error;
+      await registrarAtividade(
+        "custos",
+        "exclusao",
+        `Custo removido: ${alvo?.tipo ?? "lançamento"} — R$ ${Number(alvo?.valor ?? 0).toFixed(2)}`,
+      );
     },
     onSuccess: () => {
       toast.success("Custo removido");
@@ -206,6 +213,11 @@ function CustoDialog({
     }) => {
       const { error } = await supabase.from("custos").insert(form);
       if (error) throw error;
+      await registrarAtividade(
+        "custos",
+        "criacao",
+        `Custo lançado: ${form.tipo} — R$ ${form.valor.toFixed(2)} (${form.data})`,
+      );
     },
     onSuccess: () => {
       toast.success("Custo lançado");
