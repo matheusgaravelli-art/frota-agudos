@@ -786,6 +786,24 @@ function RelatoriosPage() {
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-2">
+            <Label>Situação</Label>
+            <div className="flex h-11 items-center gap-4 rounded-md border border-input bg-transparent px-3">
+              {STATUS_ORDEM.map((s) => (
+                <label
+                  key={s}
+                  className="flex cursor-pointer items-center gap-2 text-sm font-normal"
+                >
+                  <Checkbox
+                    checked={situacoes.has(s)}
+                    onCheckedChange={() => toggleSituacao(s)}
+                    aria-label={situacaoLabelMap[s]}
+                  />
+                  {situacaoLabelMap[s]}
+                </label>
+              ))}
+            </div>
+          </div>
           <div className="flex items-end">
             <Button
               variant="outline"
@@ -794,6 +812,7 @@ function RelatoriosPage() {
                 setDep("todos");
                 setTipo("todos");
                 setVeiculoId("todos");
+                setSituacoes(new Set<StatusVeiculo>(STATUS_ORDEM));
               }}
             >
               Relatório completo
@@ -810,14 +829,31 @@ function RelatoriosPage() {
         <MiniStat label="Manutenções" value={formatBRL(totalManut)} />
       </div>
 
-      <div className="flex flex-wrap gap-3">
-        <Button onClick={exportPDF} size="lg" className="gap-2">
-          <FileDown className="h-4 w-4" /> Exportar PDF
-        </Button>
-        <Button onClick={exportExcel} size="lg" variant="outline" className="gap-2">
-          <FileSpreadsheet className="h-4 w-4" /> Exportar Excel
-        </Button>
-      </div>
+      <Card>
+        <CardContent className="py-4 flex flex-col sm:flex-row sm:items-end gap-3">
+          <div className="space-y-2 flex-1">
+            <Label htmlFor="nome-arquivo">Nome do arquivo</Label>
+            <Input
+              id="nome-arquivo"
+              value={nomeArquivoInput}
+              onChange={(e) => setNomeArquivoInput(e.target.value)}
+              placeholder={nomeArquivoPadrao}
+              className="h-11"
+            />
+            <p className="text-xs text-muted-foreground">
+              Se ficar em branco, será usado o nome sugerido: {nomeArquivoPadrao}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Button onClick={exportPDF} size="lg" className="gap-2">
+              <FileDown className="h-4 w-4" /> Exportar PDF
+            </Button>
+            <Button onClick={exportExcel} size="lg" variant="outline" className="gap-2">
+              <FileSpreadsheet className="h-4 w-4" /> Exportar Excel
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
