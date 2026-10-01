@@ -439,6 +439,12 @@ function RelatoriosPage() {
   };
 
   const exportExcel = async () => {
+    if (situacoes.size === 0) {
+      toast.error("Selecione ao menos uma situação", {
+        description: "Marque Ativo, Inativo ou Em Manutenção no filtro de Situação.",
+      });
+      return;
+    }
     try {
       const ExcelJS = (await import("exceljs")).default;
       const wb = new ExcelJS.Workbook();
