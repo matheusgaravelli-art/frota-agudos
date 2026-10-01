@@ -209,6 +209,12 @@ function RelatoriosPage() {
   }, [custosFiltrados]);
 
   const exportPDF = async () => {
+    if (situacoes.size === 0) {
+      toast.error("Selecione ao menos uma situação", {
+        description: "Marque Ativo, Inativo ou Em Manutenção no filtro de Situação.",
+      });
+      return;
+    }
     try {
       const { default: jsPDF } = await import("jspdf");
       const autoTable = (await import("jspdf-autotable")).default;
