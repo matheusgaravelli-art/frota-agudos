@@ -788,11 +788,11 @@ function RelatoriosPage() {
           </div>
           <div className="space-y-2">
             <Label>Situação</Label>
-            <div className="flex h-11 items-center gap-4 rounded-md border border-input bg-transparent px-3">
+            <div className="flex min-h-11 flex-wrap items-center gap-x-4 gap-y-1 rounded-md border border-input bg-transparent px-3 py-2">
               {STATUS_ORDEM.map((s) => (
                 <label
                   key={s}
-                  className="flex cursor-pointer items-center gap-2 text-sm font-normal"
+                  className="flex cursor-pointer items-center gap-2 whitespace-nowrap text-sm font-normal"
                 >
                   <Checkbox
                     checked={situacoes.has(s)}
