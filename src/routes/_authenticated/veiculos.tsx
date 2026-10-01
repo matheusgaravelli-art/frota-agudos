@@ -5,6 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { registrarAtividade } from "@/lib/atividades";
 import {
   DEPARTAMENTOS,
+  SEM_DEPARTAMENTO,
+  SEM_DEPARTAMENTO_LABEL,
+  valorDepartamento,
+  departamentoLivre,
   listVeiculos,
   listCustos,
   listEtiquetas,

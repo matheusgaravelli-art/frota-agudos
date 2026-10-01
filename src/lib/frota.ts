@@ -53,6 +53,21 @@ export const DEPARTAMENTOS = [
 
 export type Departamento = (typeof DEPARTAMENTOS)[number];
 
+/** Valor do seletor que representa "Sem Departamento" (guardado como vazio no banco). */
+export const SEM_DEPARTAMENTO = "sem";
+export const SEM_DEPARTAMENTO_LABEL = "Sem Departamento";
+
+/** Valor inicial do seletor: departamento do veículo ou "Sem Departamento" quando não há. */
+export function valorDepartamento(v?: { departamento?: string | null } | null) {
+  return (v?.departamento ?? "").trim() || SEM_DEPARTAMENTO;
+}
+
+/** Departamento fora da lista fixa (texto antigo), para continuar visível no seletor. */
+export function departamentoLivre(v?: { departamento?: string | null } | null) {
+  const dep = (v?.departamento ?? "").trim();
+  return dep && !DEPARTAMENTOS.some((d) => d === dep) ? dep : null;
+}
+
 export function veiculoLabel(v: { codigo?: string | null; nome?: string | null; placa?: string }) {
   return v.codigo || v.nome || v.placa || "Veículo";
 }
