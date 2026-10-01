@@ -5,6 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { registrarAtividade } from "@/lib/atividades";
 import {
   DEPARTAMENTOS,
+  SEM_DEPARTAMENTO,
+  SEM_DEPARTAMENTO_LABEL,
+  valorDepartamento,
+  departamentoLivre,
   listVeiculos,
   listCustos,
   listEtiquetas,
@@ -121,14 +125,14 @@ function VeiculosPage() {
   const [editing, setEditing] = useState<Veiculo | null>(null);
 
   const departamentos = Array.from(
-    new Set(veiculos.map((v) => (v.departamento || "").trim()).filter(Boolean)),
+    new Set([...DEPARTAMENTOS, ...veiculos.map((v) => (v.departamento || "").trim()).filter(Boolean)]),
   ).sort((a, b) => a.localeCompare(b, "pt-BR", { sensitivity: "base" }));
 
   const filtered = ordenarVeiculos(
     veiculos.filter((v) => {
       if (filtroStatus !== "todos" && v.status !== filtroStatus) return false;
-      if (filtroDep === "sem" && (v.departamento || "").trim()) return false;
-      if (filtroDep !== "todos" && filtroDep !== "sem" && (v.departamento || "").trim() !== filtroDep)
+      if (filtroDep === SEM_DEPARTAMENTO && (v.departamento || "").trim()) return false;
+      if (filtroDep !== "todos" && filtroDep !== SEM_DEPARTAMENTO && (v.departamento || "").trim() !== filtroDep)
         return false;
       const q = busca.toLowerCase().trim();
       if (!q) return true;
@@ -225,12 +229,12 @@ function VeiculosPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos os departamentos</SelectItem>
+            <SelectItem value={SEM_DEPARTAMENTO}>{SEM_DEPARTAMENTO_LABEL}</SelectItem>
             {departamentos.map((d) => (
               <SelectItem key={d} value={d}>
                 {d}
               </SelectItem>
             ))}
-            <SelectItem value="sem">Sem departamento</SelectItem>
           </SelectContent>
         </Select>
         <Select
@@ -518,7 +522,7 @@ function VeiculoDialog({
   const qc = useQueryClient();
   const [status, setStatus] = useState<StatusVeiculo>(editing?.status ?? "ativo");
   const [departamento, setDepartamento] = useState<string>(
-    DEPARTAMENTOS.find((d) => d === (editing?.departamento ?? "")) ?? "",
+    valorDepartamento(editing),
   );
   const [fotos, setFotos] = useState<string[]>(editing?.fotos ?? []);
   const [limite, setLimite] = useState<number>(editing?.max_anexos ?? MAX_FOTOS);
@@ -534,7 +538,7 @@ function VeiculoDialog({
     setStatus(editing?.status ?? "ativo");
     // Sempre reinicia o departamento com o valor do veículo aberto,
     // para nunca herdar o departamento do veículo editado anteriormente.
-    setDepartamento(DEPARTAMENTOS.find((d) => d === (editing?.departamento ?? "")) ?? "");
+    setDepartamento(valorDepartamento(editing));
     setFotos(editing?.fotos ?? []);
     setLimite(editing?.max_anexos ?? MAX_FOTOS);
     if (editing) {
@@ -703,9 +707,9 @@ function VeiculoDialog({
     const cor = texto("cor");
     const marca_modelo = texto("marca_modelo");
     const observacao = texto("observacao");
-    const algumPreenchido = [codigo, placa, tipo, cor, marca_modelo, departamento, observacao].some(
-      (v) => v && String(v).trim(),
-    );
+    const depSalvo = departamento && departamento !== SEM_DEPARTAMENTO ? departamento : null;
+    const camposPreenchiveis = [codigo, placa, tipo, cor, marca_modelo, depSalvo, observacao];
+    const algumPreenchido = camposPreenchiveis.some((v) => v && String(v).trim());
     if (!algumPreenchido) {
       toast.error("Preencha ao menos um campo para salvar o veículo.");
       return;
@@ -727,7 +731,7 @@ function VeiculoDialog({
       tipo,
       cor,
       marca_modelo,
-      departamento: departamento || null,
+      departamento: depSalvo,
       observacao,
       status,
     });
@@ -797,6 +801,12 @@ function VeiculoDialog({
                       {d}
                     </SelectItem>
                   ))}
+                  {departamentoLivre({ departamento }) && (
+                    <SelectItem value={departamento}>
+                      {departamentoLivre({ departamento })}
+                    </SelectItem>
+                  )}
+                  <SelectItem value={SEM_DEPARTAMENTO}>{SEM_DEPARTAMENTO_LABEL}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
