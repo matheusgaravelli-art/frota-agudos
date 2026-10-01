@@ -16,6 +16,8 @@ import {
 } from "@/lib/frota";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -66,6 +68,19 @@ function RelatoriosPage() {
   const [veiculoId, setVeiculoId] = useState<string>("todos");
   const [dep, setDep] = useState<string>("todos");
   const [tipo, setTipo] = useState<string>("todos");
+  const [situacoes, setSituacoes] = useState<Set<StatusVeiculo>>(
+    () => new Set<StatusVeiculo>(STATUS_ORDEM),
+  );
+  const [nomeArquivoInput, setNomeArquivoInput] = useState<string>("");
+
+  const toggleSituacao = (s: StatusVeiculo) => {
+    setSituacoes((prev) => {
+      const next = new Set(prev);
+      if (next.has(s)) next.delete(s);
+      else next.add(s);
+      return next;
+    });
+  };
 
   const todosVeiculos = veiculos.data ?? [];
 
@@ -89,10 +104,11 @@ function RelatoriosPage() {
           if (veiculoId !== "todos" && v.id !== veiculoId) return false;
           if (dep !== "todos" && (v.departamento || "").trim() !== dep) return false;
           if (tipo !== "todos" && (v.tipo || "").trim() !== tipo) return false;
+          if (!situacoes.has((v.status ?? "ativo") as StatusVeiculo)) return false;
           return true;
         }),
       ),
-    [todosVeiculos, veiculoId, dep, tipo],
+    [todosVeiculos, veiculoId, dep, tipo, situacoes],
   );
 
   const idsPermitidos = useMemo(
@@ -157,13 +173,31 @@ function RelatoriosPage() {
   }, [veiculosFiltrados]);
 
   const periodoLabel = mes === "todos" ? `Ano de ${ano}` : `${MESES_PT[Number(mes) - 1]} de ${ano}`;
+  const situacaoLabelMap: Record<StatusVeiculo, string> = {
+    ativo: "Ativo",
+    manutencao: "Em Manutenção",
+    desativado: "Inativo",
+  };
+  const situacaoFiltroLabel =
+    situacoes.size === STATUS_ORDEM.length
+      ? null
+      : situacoes.size === 0
+        ? null
+        : `Situação: ${STATUS_ORDEM.filter((s) => situacoes.has(s)).map((s) => situacaoLabelMap[s]).join(", ")}`;
+
   const escopoLabel = [
     veiculoId === "todos" ? null : veiculoNomeMap.get(veiculoId) ?? "—",
     dep === "todos" ? null : `Departamento: ${dep}`,
     tipo === "todos" ? null : `Tipo: ${tipo}`,
+    situacaoFiltroLabel,
   ]
     .filter(Boolean)
     .join(" • ") || "Frota completa";
+
+  const nomeArquivoPadrao = `relatorio-frota-${ano}-${mes === "todos" ? "ano" : String(mes).padStart(2, "0")}`;
+  const nomeArquivo =
+    nomeArquivoInput.trim().replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").trim() ||
+    nomeArquivoPadrao;
 
   const subtotaisCategoria = useMemo(() => {
     const m = new Map<TipoCusto, number>();
@@ -174,9 +208,13 @@ function RelatoriosPage() {
     return Array.from(m.entries()).sort((a, b) => b[1] - a[1]);
   }, [custosFiltrados]);
 
-  const nomeArquivo = `relatorio-frota-${ano}-${mes === "todos" ? "ano" : String(mes).padStart(2, "0")}`;
-
   const exportPDF = async () => {
+    if (situacoes.size === 0) {
+      toast.error("Selecione ao menos uma situação", {
+        description: "Marque Ativo, Inativo ou Em Manutenção no filtro de Situação.",
+      });
+      return;
+    }
     try {
       const { default: jsPDF } = await import("jspdf");
       const autoTable = (await import("jspdf-autotable")).default;
@@ -401,6 +439,12 @@ function RelatoriosPage() {
   };
 
   const exportExcel = async () => {
+    if (situacoes.size === 0) {
+      toast.error("Selecione ao menos uma situação", {
+        description: "Marque Ativo, Inativo ou Em Manutenção no filtro de Situação.",
+      });
+      return;
+    }
     try {
       const ExcelJS = (await import("exceljs")).default;
       const wb = new ExcelJS.Workbook();
@@ -742,6 +786,24 @@ function RelatoriosPage() {
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-2">
+            <Label>Situação</Label>
+            <div className="flex h-11 items-center gap-4 rounded-md border border-input bg-transparent px-3">
+              {STATUS_ORDEM.map((s) => (
+                <label
+                  key={s}
+                  className="flex cursor-pointer items-center gap-2 text-sm font-normal"
+                >
+                  <Checkbox
+                    checked={situacoes.has(s)}
+                    onCheckedChange={() => toggleSituacao(s)}
+                    aria-label={situacaoLabelMap[s]}
+                  />
+                  {situacaoLabelMap[s]}
+                </label>
+              ))}
+            </div>
+          </div>
           <div className="flex items-end">
             <Button
               variant="outline"
@@ -750,6 +812,7 @@ function RelatoriosPage() {
                 setDep("todos");
                 setTipo("todos");
                 setVeiculoId("todos");
+                setSituacoes(new Set<StatusVeiculo>(STATUS_ORDEM));
               }}
             >
               Relatório completo
@@ -766,14 +829,31 @@ function RelatoriosPage() {
         <MiniStat label="Manutenções" value={formatBRL(totalManut)} />
       </div>
 
-      <div className="flex flex-wrap gap-3">
-        <Button onClick={exportPDF} size="lg" className="gap-2">
-          <FileDown className="h-4 w-4" /> Exportar PDF
-        </Button>
-        <Button onClick={exportExcel} size="lg" variant="outline" className="gap-2">
-          <FileSpreadsheet className="h-4 w-4" /> Exportar Excel
-        </Button>
-      </div>
+      <Card>
+        <CardContent className="py-4 flex flex-col sm:flex-row sm:items-end gap-3">
+          <div className="space-y-2 flex-1">
+            <Label htmlFor="nome-arquivo">Nome do arquivo</Label>
+            <Input
+              id="nome-arquivo"
+              value={nomeArquivoInput}
+              onChange={(e) => setNomeArquivoInput(e.target.value)}
+              placeholder={nomeArquivoPadrao}
+              className="h-11"
+            />
+            <p className="text-xs text-muted-foreground">
+              Se ficar em branco, será usado o nome sugerido: {nomeArquivoPadrao}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Button onClick={exportPDF} size="lg" className="gap-2">
+              <FileDown className="h-4 w-4" /> Exportar PDF
+            </Button>
+            <Button onClick={exportExcel} size="lg" variant="outline" className="gap-2">
+              <FileSpreadsheet className="h-4 w-4" /> Exportar Excel
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
