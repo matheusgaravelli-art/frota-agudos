@@ -68,6 +68,19 @@ function RelatoriosPage() {
   const [veiculoId, setVeiculoId] = useState<string>("todos");
   const [dep, setDep] = useState<string>("todos");
   const [tipo, setTipo] = useState<string>("todos");
+  const [situacoes, setSituacoes] = useState<Set<StatusVeiculo>>(
+    () => new Set<StatusVeiculo>(STATUS_ORDEM),
+  );
+  const [nomeArquivoInput, setNomeArquivoInput] = useState<string>("");
+
+  const toggleSituacao = (s: StatusVeiculo) => {
+    setSituacoes((prev) => {
+      const next = new Set(prev);
+      if (next.has(s)) next.delete(s);
+      else next.add(s);
+      return next;
+    });
+  };
 
   const todosVeiculos = veiculos.data ?? [];
 
