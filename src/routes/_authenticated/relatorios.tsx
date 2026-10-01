@@ -208,8 +208,6 @@ function RelatoriosPage() {
     return Array.from(m.entries()).sort((a, b) => b[1] - a[1]);
   }, [custosFiltrados]);
 
-  const nomeArquivo = `relatorio-frota-${ano}-${mes === "todos" ? "ano" : String(mes).padStart(2, "0")}`;
-
   const exportPDF = async () => {
     try {
       const { default: jsPDF } = await import("jspdf");
