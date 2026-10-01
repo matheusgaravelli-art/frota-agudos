@@ -104,10 +104,11 @@ function RelatoriosPage() {
           if (veiculoId !== "todos" && v.id !== veiculoId) return false;
           if (dep !== "todos" && (v.departamento || "").trim() !== dep) return false;
           if (tipo !== "todos" && (v.tipo || "").trim() !== tipo) return false;
+          if (!situacoes.has((v.status ?? "ativo") as StatusVeiculo)) return false;
           return true;
         }),
       ),
-    [todosVeiculos, veiculoId, dep, tipo],
+    [todosVeiculos, veiculoId, dep, tipo, situacoes],
   );
 
   const idsPermitidos = useMemo(
