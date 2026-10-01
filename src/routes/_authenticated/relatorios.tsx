@@ -173,13 +173,31 @@ function RelatoriosPage() {
   }, [veiculosFiltrados]);
 
   const periodoLabel = mes === "todos" ? `Ano de ${ano}` : `${MESES_PT[Number(mes) - 1]} de ${ano}`;
+  const situacaoLabelMap: Record<StatusVeiculo, string> = {
+    ativo: "Ativo",
+    manutencao: "Em Manutenção",
+    desativado: "Inativo",
+  };
+  const situacaoFiltroLabel =
+    situacoes.size === STATUS_ORDEM.length
+      ? null
+      : situacoes.size === 0
+        ? null
+        : `Situação: ${STATUS_ORDEM.filter((s) => situacoes.has(s)).map((s) => situacaoLabelMap[s]).join(", ")}`;
+
   const escopoLabel = [
     veiculoId === "todos" ? null : veiculoNomeMap.get(veiculoId) ?? "—",
     dep === "todos" ? null : `Departamento: ${dep}`,
     tipo === "todos" ? null : `Tipo: ${tipo}`,
+    situacaoFiltroLabel,
   ]
     .filter(Boolean)
     .join(" • ") || "Frota completa";
+
+  const nomeArquivoPadrao = `relatorio-frota-${ano}-${mes === "todos" ? "ano" : String(mes).padStart(2, "0")}`;
+  const nomeArquivo =
+    nomeArquivoInput.trim().replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").trim() ||
+    nomeArquivoPadrao;
 
   const subtotaisCategoria = useMemo(() => {
     const m = new Map<TipoCusto, number>();
