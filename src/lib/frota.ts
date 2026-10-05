@@ -142,6 +142,7 @@ export type Manutencao = {
   oficina: string | null;
   observacoes: string | null;
   valor: number | null;
+  km: number | null;
   custo_id: string | null;
   created_at: string;
   updated_at: string;
