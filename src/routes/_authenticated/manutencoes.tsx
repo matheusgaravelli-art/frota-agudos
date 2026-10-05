@@ -107,6 +107,7 @@ function ManutencoesPage() {
         </Card>
       ) : (
         <>
+          <AnaliseIA veiculos={veiculos.data ?? []} />
           <div className="max-w-xs">
             <Select value={filtroVeiculo} onValueChange={setFiltroVeiculo}>
               <SelectTrigger className="h-11">
@@ -148,6 +149,7 @@ function ManutencoesPage() {
                               <span className="font-semibold">{m.peca_servico}</span>
                               <span className="text-xs text-muted-foreground">
                                 {formatData(m.data)}
+                                {m.km != null ? ` · ${m.km.toLocaleString("pt-BR")} km` : ""}
                               </span>
                             </div>
                             <div className="text-sm text-muted-foreground">
@@ -260,6 +262,7 @@ function ManutencaoDialog({
         oficina: form.oficina,
         observacoes: form.observacoes,
         valor: form.valor,
+        km: form.km,
         custo_id,
       };
 
@@ -404,10 +407,10 @@ function ManutencaoDialog({
               defaultValue={editing?.observacoes ?? ""}
             />
           </div>
-          {!editing && (
-            <div className="space-y-2">
-              <Label htmlFor="km">KM do veículo (para custo vinculado)</Label>
-              <Input id="km" name="km" type="number" min="0" />
+          <div className="space-y-2">
+            <Label htmlFor="km">KM do veículo na manutenção</Label>
+            <Input id="km" name="km" type="number" min="0" defaultValue={editing?.km ?? ""} />
+            {!editing && (
               <label className="flex items-center gap-2 text-sm text-muted-foreground pt-1">
                 <input
                   type="checkbox"
@@ -417,8 +420,8 @@ function ManutencaoDialog({
                 />
                 Lançar automaticamente em Custos (categoria Manutenção)
               </label>
-            </div>
-          )}
+            )}
+          </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
