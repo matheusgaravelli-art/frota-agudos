@@ -435,3 +435,67 @@ function ManutencaoDialog({
     </Dialog>
   );
 }
+
+function AnaliseIA({ veiculos }: { veiculos: Veiculo[] }) {
+  const analisar = useServerFn(analisarVeiculo);
+  const [veiculoId, setVeiculoId] = useState("");
+  const [km, setKm] = useState("");
+  const [texto, setTexto] = useState<string | null>(null);
+  const mut = useMutation({
+    mutationFn: () =>
+      analisar({ data: { veiculoId, kmAtual: km ? Number(km) : null } }),
+    onSuccess: (r) => {
+      if (r.ok) setTexto(r.texto);
+      else {
+        setTexto(null);
+        toast.error(r.erro);
+      }
+    },
+    onError: () => toast.error("Não foi possível gerar a análise agora."),
+  });
+
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-center gap-2 font-semibold">
+          <Sparkles className="h-4 w-4 text-primary" /> Análise inteligente de falhas
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Escolha o veículo e informe a quilometragem atual. A análise usa o histórico de manutenções
+          e custos para apontar falhas recorrentes e os próximos cuidados.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="sm:flex-1">
+            <VeiculoCombobox veiculos={veiculos} value={veiculoId} onChange={setVeiculoId} />
+          </div>
+          <Input
+            type="number"
+            min="0"
+            placeholder="KM atual"
+            value={km}
+            onChange={(e) => setKm(e.target.value)}
+            className="h-11 sm:w-36"
+          />
+          <Button
+            className="h-11"
+            disabled={!veiculoId || mut.isPending}
+            onClick={() => {
+              if (km && (!Number.isFinite(Number(km)) || Number(km) < 0)) {
+                toast.error("KM inválido. Use um número maior ou igual a zero.");
+                return;
+              }
+              mut.mutate();
+            }}
+          >
+            {mut.isPending ? "Analisando..." : "Analisar"}
+          </Button>
+        </div>
+        {texto && (
+          <div className="rounded-md border bg-muted/40 p-4 text-sm whitespace-pre-wrap leading-relaxed">
+            {texto}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
