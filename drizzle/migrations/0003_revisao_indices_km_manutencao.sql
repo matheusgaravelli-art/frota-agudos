@@ -1,0 +1,14 @@
+ALTER TABLE public.manutencoes ADD COLUMN IF NOT EXISTS km integer;
+CREATE INDEX IF NOT EXISTS idx_custos_veiculo ON public.custos(veiculo_id);
+CREATE INDEX IF NOT EXISTS idx_custos_data ON public.custos(data);
+CREATE INDEX IF NOT EXISTS idx_documentos_veiculo ON public.documentos(veiculo_id);
+CREATE INDEX IF NOT EXISTS idx_documentos_venc ON public.documentos(vencimento);
+CREATE INDEX IF NOT EXISTS idx_manutencoes_veiculo ON public.manutencoes(veiculo_id);
+CREATE INDEX IF NOT EXISTS idx_manutencoes_custo ON public.manutencoes(custo_id);
+CREATE INDEX IF NOT EXISTS idx_veiculo_etiquetas_etiqueta ON public.veiculo_etiquetas(etiqueta_id);
+CREATE INDEX IF NOT EXISTS idx_veiculos_motorista ON public.veiculos(motorista_id);
+CREATE INDEX IF NOT EXISTS idx_veiculos_placa ON public.veiculos(placa);
+CREATE INDEX IF NOT EXISTS idx_atividades_created ON public.atividades(created_at DESC);
+REVOKE EXECUTE ON FUNCTION public.handle_new_user_role() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO authenticated;

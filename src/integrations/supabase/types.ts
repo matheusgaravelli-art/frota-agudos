@@ -213,6 +213,7 @@ export type Database = {
           custo_id: string | null
           data: string
           id: string
+          km: number | null
           observacoes: string | null
           oficina: string | null
           peca_servico: string
@@ -225,6 +226,7 @@ export type Database = {
           custo_id?: string | null
           data?: string
           id?: string
+          km?: number | null
           observacoes?: string | null
           oficina?: string | null
           peca_servico: string
@@ -237,6 +239,7 @@ export type Database = {
           custo_id?: string | null
           data?: string
           id?: string
+          km?: number | null
           observacoes?: string | null
           oficina?: string | null
           peca_servico?: string
