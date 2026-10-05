@@ -29,8 +29,12 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Pencil, Trash2, Wrench } from "lucide-react";
+import { Plus, Pencil, Trash2, Wrench, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { analisarVeiculo } from "@/lib/analise-ia.functions";
+import { VeiculoCombobox } from "@/components/veiculo-combobox";
+import type { Veiculo } from "@/lib/frota";
 
 export const Route = createFileRoute("/_authenticated/manutencoes")({
   component: ManutencoesPage,
