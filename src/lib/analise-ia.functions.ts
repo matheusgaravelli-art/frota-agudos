@@ -55,7 +55,7 @@ export const analisarVeiculo = createServerFn({ method: "POST" })
           },
         },
       });
-      const texto = (await result.text).trim();
+      const texto = (await result.text).replace(/\*\*|^#+\s*/gm, "").trim();
       if (!texto) return { ok: false as const, erro: "A IA não retornou uma análise. Tente novamente mais tarde." };
       return { ok: true as const, texto };
     } catch (e: unknown) {
