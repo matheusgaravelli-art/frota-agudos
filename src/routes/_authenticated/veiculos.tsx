@@ -120,6 +120,7 @@ function VeiculosPage() {
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<"todos" | StatusVeiculo>("todos");
   const [filtroDep, setFiltroDep] = useState<string>("todos");
+  const [filtroEtiqueta, setFiltroEtiqueta] = useState<string>("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState<Veiculo | null>(null);
@@ -133,6 +134,9 @@ function VeiculosPage() {
       if (filtroStatus !== "todos" && v.status !== filtroStatus) return false;
       if (filtroDep === SEM_DEPARTAMENTO && (v.departamento || "").trim()) return false;
       if (filtroDep !== "todos" && filtroDep !== SEM_DEPARTAMENTO && (v.departamento || "").trim() !== filtroDep)
+        return false;
+      if (filtroEtiqueta !== "todos" &&
+        !vinculos.some((x) => x.veiculo_id === v.id && x.etiqueta_id === filtroEtiqueta))
         return false;
       const q = busca.toLowerCase().trim();
       if (!q) return true;
@@ -249,6 +253,22 @@ function VeiculosPage() {
             <SelectItem value="ativo">Ativo</SelectItem>
             <SelectItem value="manutencao">Em manutenção</SelectItem>
             <SelectItem value="desativado">Desativado</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={filtroEtiqueta} onValueChange={setFiltroEtiqueta}>
+          <SelectTrigger className="h-11 w-full sm:w-[190px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todas as etiquetas</SelectItem>
+            {etiquetas.map((e) => (
+              <SelectItem key={e.id} value={e.id}>
+                <span className="flex items-center gap-2">
+                  <span className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: e.cor }} />
+                  {e.nome}
+                </span>
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
