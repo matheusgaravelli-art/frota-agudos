@@ -1011,8 +1011,41 @@ function ImportarDialog({
 }) {
   const qc = useQueryClient();
   const [processando, setProcessando] = useState(false);
-  const [modo, setModo] = useState<"substituir" | "adicionar">("adicionar");
+  const [modo, setModo] = useState<"substituir" | "adicionar" | "complementar">("adicionar");
   const fileRef = useRef<HTMLInputElement>(null);
+  const [previa, setPrevia] = useState<{
+    updates: Map<string, Record<string, string>>;
+    naoEncontrados: string[];
+  } | null>(null);
+  const [resultado, setResultado] = useState<{ atualizados: number; naoEncontrados: string[] } | null>(null);
+
+  useEffect(() => {
+    if (!open) {
+      setPrevia(null);
+      setResultado(null);
+    }
+  }, [open]);
+
+  const confirmarComplemento = async () => {
+    if (!previa) return;
+    setProcessando(true);
+    try {
+      let n = 0;
+      for (const [id, campos] of previa.updates) {
+        const { error } = await supabase.from("veiculos").update(campos as never).eq("id", id);
+        if (error) throw error;
+        n++;
+      }
+      qc.invalidateQueries({ queryKey: ["veiculos"] });
+      toast.success(`${n} veículo(s) atualizado(s).`);
+      setResultado({ atualizados: n, naoEncontrados: previa.naoEncontrados });
+      setPrevia(null);
+    } catch (e) {
+      toast.error(`Não foi possível atualizar: ${(e as Error).message}`);
+    } finally {
+      setProcessando(false);
+    }
+  };
 
   const pick = (row: Record<string, unknown>, chaves: string[]) => {
     for (const k of Object.keys(row)) {
@@ -1062,6 +1095,52 @@ function ImportarDialog({
         toast.error(
           "Nenhuma linha válida encontrada. Verifique se a planilha tem as colunas: Patrimônio (ou ID Veículo), Tipo, Cor, Dep., Placa, Status.",
         );
+        return;
+      }
+
+      if (modo === "complementar") {
+        const { data: existentes, error: exErr } = await supabase
+          .from("veiculos")
+          .select("id, placa, codigo");
+        if (exErr) throw exErr;
+        const porPlaca = new Map<string, string>();
+        const porCodigo = new Map<string, string>();
+        (existentes ?? []).forEach((e) => {
+          if (e.placa) porPlaca.set(String(e.placa).toUpperCase().trim(), e.id);
+          if (e.codigo) porCodigo.set(String(e.codigo).trim().toUpperCase(), e.id);
+        });
+        const updates = new Map<string, Record<string, string>>();
+        const naoEncontrados: string[] = [];
+        rows.forEach((r, idx) => {
+          const codigo = pick(r, ["patrimonio", "idveiculo", "id", "codigo", "veiculo"]);
+          const placa = pick(r, ["placa"]).toUpperCase();
+          if (!codigo && !placa) return;
+          const id = placa ? porPlaca.get(placa) : porCodigo.get(codigo.toUpperCase());
+          if (!id) {
+            naoEncontrados.push(
+              `Linha ${idx + 2}: ${placa ? `Placa ${placa}` : `Patrimônio ${codigo}`}`,
+            );
+            return;
+          }
+          const campos: Record<string, string> = {};
+          if (codigo) campos.codigo = codigo;
+          if (placa) campos.placa = placa;
+          const tipo = pick(r, ["tipo"]);
+          if (tipo) campos.tipo = tipo;
+          const cor = pick(r, ["cor"]);
+          if (cor) campos.cor = cor;
+          const mm = pick(r, ["marcamodelo", "marca", "modelo"]);
+          if (mm) campos.marca_modelo = mm;
+          const dep = pick(r, ["dep", "departamento", "secretaria"]);
+          if (dep) campos.departamento = dep;
+          const st = STATUS_MAP[pick(r, ["status"]).toLowerCase()];
+          if (st) campos.status = st;
+          const obs = pick(r, ["observacao", "observacoes", "obs"]);
+          if (obs) campos.observacao = obs;
+          if (Object.keys(campos).length === 0) return;
+          updates.set(id, { ...(updates.get(id) ?? {}), ...campos });
+        });
+        setPrevia({ updates, naoEncontrados });
         return;
       }
 
@@ -1179,7 +1258,62 @@ function ImportarDialog({
                 corrigir.
               </span>
             </button>
+            <button
+              type="button"
+              onClick={() => setModo("complementar")}
+              className={cn(
+                "w-full text-left rounded-md border p-3 text-sm transition-colors",
+                modo === "complementar" ? "border-primary bg-accent" : "hover:bg-accent/50",
+              )}
+            >
+              <span className="font-medium">3. Complementar veículos existentes</span>
+              <span className="block text-muted-foreground mt-1">
+                Encontra cada veículo pela Placa (ou pelo Patrimônio, se não houver placa) e
+                atualiza só o que estiver preenchido na planilha. Células vazias não apagam nada e
+                nenhum veículo novo é criado.
+              </span>
+            </button>
           </div>
+          {previa && (
+            <div className="rounded-md border p-3 text-sm space-y-2 bg-muted/40">
+              <p className="font-medium">Resumo antes de confirmar</p>
+              <p><strong>{previa.updates.size}</strong> veículo(s) serão atualizados.</p>
+              <p><strong>{previa.naoEncontrados.length}</strong> linha(s) não encontradas no sistema.</p>
+              {previa.naoEncontrados.length > 0 && (
+                <ul className="max-h-32 overflow-auto text-xs text-muted-foreground list-disc pl-4">
+                  {previa.naoEncontrados.map((t) => <li key={t}>{t}</li>)}
+                </ul>
+              )}
+              <div className="flex gap-2 pt-1">
+                <Button type="button" variant="outline" className="flex-1" onClick={() => setPrevia(null)}>
+                  Cancelar
+                </Button>
+                <Button
+                  type="button"
+                  className="flex-1"
+                  disabled={processando || previa.updates.size === 0}
+                  onClick={confirmarComplemento}
+                >
+                  {processando ? "Atualizando..." : "Confirmar atualização"}
+                </Button>
+              </div>
+            </div>
+          )}
+          {resultado && (
+            <div className="rounded-md border p-3 text-sm space-y-2">
+              <p><strong>{resultado.atualizados}</strong> veículo(s) atualizado(s).</p>
+              {resultado.naoEncontrados.length > 0 ? (
+                <>
+                  <p className="font-medium">Não encontrados ({resultado.naoEncontrados.length}) — confira:</p>
+                  <ul className="max-h-40 overflow-auto text-xs text-muted-foreground list-disc pl-4">
+                    {resultado.naoEncontrados.map((t) => <li key={t}>{t}</li>)}
+                  </ul>
+                </>
+              ) : (
+                <p className="text-muted-foreground">Todas as linhas foram encontradas.</p>
+              )}
+            </div>
+          )}
           <input
             ref={fileRef}
             type="file"
@@ -1195,6 +1329,8 @@ function ImportarDialog({
             className="w-full h-12 gap-2"
             disabled={processando}
             onClick={() => {
+              setPrevia(null);
+              setResultado(null);
               if (
                 modo === "substituir" &&
                 !confirm("Isso apaga todos os veículos já cadastrados. Deseja continuar?")
@@ -1208,7 +1344,9 @@ function ImportarDialog({
               ? "Importando..."
               : modo === "substituir"
                 ? "Escolher planilha e substituir tudo"
-                : "Escolher planilha e adicionar"}
+                : modo === "complementar"
+                  ? "Escolher planilha e ver resumo"
+                  : "Escolher planilha e adicionar"}
           </Button>
         </div>
       </DialogContent>
