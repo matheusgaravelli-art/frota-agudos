@@ -494,7 +494,7 @@ function VeiculoCard({
                 </div>
               )}
               <div className="text-xs text-muted-foreground pt-1">
-                ID Veículo: {v.codigo || v.nome || "—"}
+                Patrimônio: {v.codigo || v.nome || "—"}
               </div>
             </div>
 
@@ -740,7 +740,7 @@ function VeiculoDialog({
       );
       if (repetida) {
         toast.error("Placa já cadastrada no sistema", {
-          description: `A placa ${placa} pertence ao veículo ${veiculoTitulo(repetida)} (ID ${repetida.codigo || repetida.nome || "—"}). Corrija a placa para continuar.`,
+          description: `A placa ${placa} pertence ao veículo ${veiculoTitulo(repetida)} (Patrimônio ${repetida.codigo || repetida.nome || "—"}). Corrija a placa para continuar.`,
         });
         return;
       }
@@ -766,7 +766,7 @@ function VeiculoDialog({
         <form onSubmit={handleSubmit} className="space-y-4" key={editing?.id ?? "new"}>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="codigo">ID Veículo</Label>
+              <Label htmlFor="codigo">Patrimônio</Label>
               <Input
                 id="codigo"
                 name="codigo"
@@ -1041,7 +1041,7 @@ function ImportarDialog({
 
       const registros = rows
         .map((r) => {
-          const codigo = pick(r, ["idveiculo", "id", "codigo", "veiculo"]);
+          const codigo = pick(r, ["patrimonio", "idveiculo", "id", "codigo", "veiculo"]);
           const placa = pick(r, ["placa"]).toUpperCase();
           const statusTxt = pick(r, ["status"]).toLowerCase();
           return {
@@ -1060,7 +1060,7 @@ function ImportarDialog({
 
       if (registros.length === 0) {
         toast.error(
-          "Nenhuma linha válida encontrada. Verifique se a planilha tem as colunas: ID Veículo, Tipo, Cor, Dep., Placa, Status.",
+          "Nenhuma linha válida encontrada. Verifique se a planilha tem as colunas: Patrimônio (ou ID Veículo), Tipo, Cor, Dep., Placa, Status.",
         );
         return;
       }
@@ -1143,7 +1143,7 @@ function ImportarDialog({
         <DialogHeader>
           <DialogTitle>Importar veículos por planilha</DialogTitle>
           <DialogDescription>
-            A planilha (Excel ou CSV) deve ter as colunas: ID Veículo, Tipo, Cor, Marca/Modelo,
+            A planilha (Excel ou CSV) deve ter as colunas: Patrimônio (ou ID Veículo), Tipo, Cor, Marca/Modelo,
             Dep., Placa, Status. Cada linha vira um veículo.
           </DialogDescription>
         </DialogHeader>

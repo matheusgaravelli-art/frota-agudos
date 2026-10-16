@@ -549,7 +549,7 @@ function RelatoriosPage() {
         { header: "Tipo", key: "tipo", width: 18 },
         { header: "Cor", key: "cor", width: 14 },
         { header: "Situação", key: "status", width: 18 },
-        { header: "ID Veículo", key: "codigo", width: 16 },
+        { header: "Patrimônio", key: "codigo", width: 16 },
       ];
       styleHeader(wsV.getRow(1), brandFill, white);
       veiculosFiltrados.forEach((v) => {
