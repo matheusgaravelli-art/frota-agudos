@@ -1032,7 +1032,7 @@ function ImportarDialog({
     try {
       let n = 0;
       for (const [id, campos] of previa.updates) {
-        const { error } = await supabase.from("veiculos").update(campos).eq("id", id);
+        const { error } = await supabase.from("veiculos").update(campos as never).eq("id", id);
         if (error) throw error;
         n++;
       }
