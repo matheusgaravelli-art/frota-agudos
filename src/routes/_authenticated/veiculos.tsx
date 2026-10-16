@@ -1258,7 +1258,62 @@ function ImportarDialog({
                 corrigir.
               </span>
             </button>
+            <button
+              type="button"
+              onClick={() => setModo("complementar")}
+              className={cn(
+                "w-full text-left rounded-md border p-3 text-sm transition-colors",
+                modo === "complementar" ? "border-primary bg-accent" : "hover:bg-accent/50",
+              )}
+            >
+              <span className="font-medium">3. Complementar veículos existentes</span>
+              <span className="block text-muted-foreground mt-1">
+                Encontra cada veículo pela Placa (ou pelo Patrimônio, se não houver placa) e
+                atualiza só o que estiver preenchido na planilha. Células vazias não apagam nada e
+                nenhum veículo novo é criado.
+              </span>
+            </button>
           </div>
+          {previa && (
+            <div className="rounded-md border p-3 text-sm space-y-2 bg-muted/40">
+              <p className="font-medium">Resumo antes de confirmar</p>
+              <p><strong>{previa.updates.size}</strong> veículo(s) serão atualizados.</p>
+              <p><strong>{previa.naoEncontrados.length}</strong> linha(s) não encontradas no sistema.</p>
+              {previa.naoEncontrados.length > 0 && (
+                <ul className="max-h-32 overflow-auto text-xs text-muted-foreground list-disc pl-4">
+                  {previa.naoEncontrados.map((t) => <li key={t}>{t}</li>)}
+                </ul>
+              )}
+              <div className="flex gap-2 pt-1">
+                <Button type="button" variant="outline" className="flex-1" onClick={() => setPrevia(null)}>
+                  Cancelar
+                </Button>
+                <Button
+                  type="button"
+                  className="flex-1"
+                  disabled={processando || previa.updates.size === 0}
+                  onClick={confirmarComplemento}
+                >
+                  {processando ? "Atualizando..." : "Confirmar atualização"}
+                </Button>
+              </div>
+            </div>
+          )}
+          {resultado && (
+            <div className="rounded-md border p-3 text-sm space-y-2">
+              <p><strong>{resultado.atualizados}</strong> veículo(s) atualizado(s).</p>
+              {resultado.naoEncontrados.length > 0 ? (
+                <>
+                  <p className="font-medium">Não encontrados ({resultado.naoEncontrados.length}) — confira:</p>
+                  <ul className="max-h-40 overflow-auto text-xs text-muted-foreground list-disc pl-4">
+                    {resultado.naoEncontrados.map((t) => <li key={t}>{t}</li>)}
+                  </ul>
+                </>
+              ) : (
+                <p className="text-muted-foreground">Todas as linhas foram encontradas.</p>
+              )}
+            </div>
+          )}
           <input
             ref={fileRef}
             type="file"
@@ -1274,6 +1329,8 @@ function ImportarDialog({
             className="w-full h-12 gap-2"
             disabled={processando}
             onClick={() => {
+              setPrevia(null);
+              setResultado(null);
               if (
                 modo === "substituir" &&
                 !confirm("Isso apaga todos os veículos já cadastrados. Deseja continuar?")
@@ -1287,7 +1344,9 @@ function ImportarDialog({
               ? "Importando..."
               : modo === "substituir"
                 ? "Escolher planilha e substituir tudo"
-                : "Escolher planilha e adicionar"}
+                : modo === "complementar"
+                  ? "Escolher planilha e ver resumo"
+                  : "Escolher planilha e adicionar"}
           </Button>
         </div>
       </DialogContent>
