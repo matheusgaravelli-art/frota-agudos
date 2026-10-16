@@ -54,7 +54,7 @@ export function VeiculoCombobox({
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
         <Command>
-          <CommandInput placeholder="Digite nome, placa ou ID..." />
+          <CommandInput placeholder="Digite nome, placa ou patrimônio..." />
           <CommandList>
             <CommandEmpty>Nenhum veículo encontrado.</CommandEmpty>
             <CommandGroup>
