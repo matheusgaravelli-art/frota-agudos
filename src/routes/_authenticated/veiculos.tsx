@@ -195,7 +195,7 @@ function VeiculosPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Veículos</h1>
-          <p className="text-sm text-muted-foreground mt-1">{veiculos.length} cadastrado(s)</p>
+          <p className="text-sm text-muted-foreground mt-1">{filtered.length === veiculos.length ? `${veiculos.length} cadastrado(s)` : `${filtered.length} de ${veiculos.length} veículo(s)`}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button size="lg" variant="outline" onClick={() => setEtiquetasOpen(true)} className="gap-2">
@@ -770,7 +770,6 @@ function VeiculoDialog({
               <Input
                 id="codigo"
                 name="codigo"
-                required
                 className="h-11"
                 defaultValue={editing?.codigo ?? editing?.nome ?? ""}
               />
@@ -780,7 +779,6 @@ function VeiculoDialog({
               <Input
                 id="placa"
                 name="placa"
-                required
                 defaultValue={editing?.placa ?? ""}
                 className="uppercase font-mono h-11"
               />
