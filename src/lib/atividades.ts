@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type AreaAtividade = "veiculos" | "custos";
+export type AreaAtividade = "veiculos";
 export type AcaoAtividade = "criacao" | "edicao" | "exclusao";
 
 export type Atividade = {
@@ -37,7 +37,6 @@ export async function registrarAtividade(
 
 export const rotuloArea: Record<string, string> = {
   veiculos: "Veículos",
-  custos: "Custos",
 };
 
 export const rotuloAcao: Record<string, string> = {
