@@ -2,15 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  listCustos,
   listVeiculos,
-  listManutencoes,
-  formatBRL,
-  formatData,
-  tipoCustoLabel,
   statusVeiculoLabel,
   ordenarVeiculos,
-  type TipoCusto,
   type StatusVeiculo,
   veiculoTitulo,
 } from "@/lib/frota";
@@ -37,12 +31,12 @@ export const Route = createFileRoute("/_authenticated/relatorios")({
       {
         name: "description",
         content:
-          "Relatórios gerenciais da frota em PDF e Excel: situação dos veículos, custos e manutenções por período, departamento e tipo.",
+          "Relatórios gerenciais da frota em PDF e Excel: situação dos veículos por departamento, tipo e situação.",
       },
       { property: "og:title", content: "Relatórios da frota | Gestão de Frota" },
       {
         property: "og:description",
-        content: "Gere relatórios gerenciais da frota em PDF e Excel com filtros por período, departamento e tipo.",
+        content: "Gere relatórios gerenciais da frota em PDF e Excel com filtros por departamento, tipo e situação.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -50,21 +44,13 @@ export const Route = createFileRoute("/_authenticated/relatorios")({
   }),
 });
 
-const MESES_PT = [
-  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
-];
 
 const STATUS_ORDEM: StatusVeiculo[] = ["ativo", "manutencao", "desativado"];
 
 function RelatoriosPage() {
   const veiculos = useQuery({ queryKey: ["veiculos"], queryFn: listVeiculos });
-  const custos = useQuery({ queryKey: ["custos"], queryFn: listCustos });
-  const manutencoes = useQuery({ queryKey: ["manutencoes"], queryFn: listManutencoes });
 
   const hoje = new Date();
-  const [mes, setMes] = useState<string>(String(hoje.getMonth() + 1));
-  const [ano, setAno] = useState<string>(String(hoje.getFullYear()));
   const [veiculoId, setVeiculoId] = useState<string>("todos");
   const [dep, setDep] = useState<string>("todos");
   const [tipo, setTipo] = useState<string>("todos");
@@ -111,32 +97,11 @@ function RelatoriosPage() {
     [todosVeiculos, veiculoId, dep, tipo, situacoes],
   );
 
-  const idsPermitidos = useMemo(
-    () => new Set(veiculosFiltrados.map((v) => v.id)),
-    [veiculosFiltrados],
-  );
-
   const veiculoNomeMap = useMemo(() => {
     const m = new Map<string, string>();
     todosVeiculos.forEach((v) => m.set(v.id, `${veiculoTitulo(v)} (${v.placa})`));
     return m;
   }, [todosVeiculos]);
-
-  const inPeriodo = (dataISO: string) => {
-    const [y, mo] = dataISO.split("-").map(Number);
-    if (mes === "todos") return y === Number(ano);
-    return y === Number(ano) && mo === Number(mes);
-  };
-
-  const custosFiltrados = (custos.data ?? []).filter(
-    (c) => inPeriodo(c.data) && idsPermitidos.has(c.veiculo_id),
-  );
-  const manutFiltradas = (manutencoes.data ?? []).filter(
-    (m) => inPeriodo(m.data) && idsPermitidos.has(m.veiculo_id),
-  );
-
-  const totalCustos = custosFiltrados.reduce((acc, c) => acc + Number(c.valor), 0);
-  const totalManut = manutFiltradas.reduce((acc, m) => acc + Number(m.valor ?? 0), 0);
 
   const porStatus = useMemo(() => {
     const m = new Map<StatusVeiculo, number>();
@@ -172,7 +137,6 @@ function RelatoriosPage() {
     return Array.from(m.entries()).sort((a, b) => b[1] - a[1]);
   }, [veiculosFiltrados]);
 
-  const periodoLabel = mes === "todos" ? `Ano de ${ano}` : `${MESES_PT[Number(mes) - 1]} de ${ano}`;
   const situacaoLabelMap: Record<StatusVeiculo, string> = {
     ativo: "Ativo",
     manutencao: "Em Manutenção",
@@ -193,20 +157,12 @@ function RelatoriosPage() {
   ]
     .filter(Boolean)
     .join(" • ") || "Frota completa";
-
+  const nomeArquivoPadrao = `relatorio-frota-${hoje.toISOString().slice(0, 10)}`;
   const nomeArquivoPadrao = `relatorio-frota-${ano}-${mes === "todos" ? "ano" : String(mes).padStart(2, "0")}`;
   const nomeArquivo =
     nomeArquivoInput.trim().replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").trim() ||
     nomeArquivoPadrao;
 
-  const subtotaisCategoria = useMemo(() => {
-    const m = new Map<TipoCusto, number>();
-    custosFiltrados.forEach((c) => {
-      const t = c.tipo as TipoCusto;
-      m.set(t, (m.get(t) ?? 0) + Number(c.valor));
-    });
-    return Array.from(m.entries()).sort((a, b) => b[1] - a[1]);
-  }, [custosFiltrados]);
 
   const exportPDF = async () => {
     if (situacoes.size === 0) {
@@ -249,7 +205,7 @@ function RelatoriosPage() {
         autoTable(doc, {
           startY: y,
           head: [head],
-          body: body.length > 0 ? body : [["Sem registros no período", ...head.slice(1).map(() => "")]],
+          body: body.length > 0 ? body : [["Sem registros", ...head.slice(1).map(() => "")]],
           theme: "plain",
           headStyles: {
             fillColor: soft,
@@ -283,7 +239,7 @@ function RelatoriosPage() {
       doc.text("Relatório Gerencial de Frota", M, 14);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
-      doc.text(`${periodoLabel}  |  ${escopoLabel}`, M, 22);
+      doc.text(`${escopoLabel}`, M, 22);
       doc.setFontSize(8.5);
       doc.text(
         `Emitido em ${hoje.toLocaleDateString("pt-BR")} ${hoje.toLocaleTimeString("pt-BR", {
@@ -342,79 +298,6 @@ function RelatoriosPage() {
         { columnStyles: { 1: { halign: "right" } } },
       );
 
-      // Resumo financeiro
-      doc.addPage();
-      y = secao("Resumo financeiro do período", 20);
-      y = tabela(
-        y,
-        ["Indicador", "Valor"],
-        [
-          ["Total de custos lançados", formatBRL(totalCustos)],
-          ["Total de manutenções", formatBRL(totalManut)],
-          ["Lançamentos de custos", String(custosFiltrados.length)],
-          ["Registros de manutenção", String(manutFiltradas.length)],
-        ],
-        { columnStyles: { 1: { halign: "right", fontStyle: "bold" } } },
-      );
-
-      if (subtotaisCategoria.length > 0) {
-        y = secao("Custos por categoria", y + 10);
-        y = tabela(
-          y,
-          ["Categoria", "Valor", "% do total"],
-          subtotaisCategoria.map(([t, v]) => [
-            tipoCustoLabel[t] ?? t,
-            formatBRL(v),
-            totalCustos > 0 ? ((v / totalCustos) * 100).toFixed(1) + "%" : "—",
-          ]),
-          {
-            foot: [["Total", formatBRL(totalCustos), "100,0%"]],
-            columnStyles: { 1: { halign: "right" }, 2: { halign: "right" } },
-          },
-        );
-      }
-
-      y = secao("Detalhamento de custos", y + 10);
-      y = tabela(
-        y,
-        ["Data", "Veículo", "Categoria", "KM", "Valor"],
-        custosFiltrados.map((c) => [
-          formatData(c.data),
-          veiculoNomeMap.get(c.veiculo_id) ?? "—",
-          tipoCustoLabel[c.tipo as TipoCusto] ?? c.tipo,
-          c.km != null ? c.km.toLocaleString("pt-BR") : "—",
-          formatBRL(Number(c.valor)),
-        ]),
-        {
-          foot:
-            custosFiltrados.length > 0
-              ? [["", "", "", "Total", formatBRL(totalCustos)]]
-              : undefined,
-          columnStyles: {
-            0: { cellWidth: 22 },
-            3: { halign: "right", cellWidth: 20 },
-            4: { halign: "right", cellWidth: 28 },
-          },
-        },
-      );
-
-      y = secao("Histórico de manutenções", y + 10);
-      tabela(
-        y,
-        ["Data", "Veículo", "Peça / Serviço", "Oficina", "Valor"],
-        manutFiltradas.map((m) => [
-          formatData(m.data),
-          veiculoNomeMap.get(m.veiculo_id) ?? "—",
-          m.peca_servico,
-          m.oficina ?? "—",
-          m.valor != null ? formatBRL(Number(m.valor)) : "—",
-        ]),
-        {
-          foot:
-            manutFiltradas.length > 0 ? [["", "", "", "Total", formatBRL(totalManut)]] : undefined,
-          columnStyles: { 0: { cellWidth: 22 }, 4: { halign: "right", cellWidth: 28 } },
-        },
-      );
 
       const pageCount = doc.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
@@ -518,28 +401,6 @@ function RelatoriosPage() {
       rFora.getCell(1).font = { bold: true };
       rFora.getCell(2).value = naoAtivos;
 
-      row += 1;
-      tituloBloco(ws, "Totais financeiros do período", `A${row}:C${row}`);
-      row += 1;
-      const rCustos = ws.getRow(row++);
-      rCustos.getCell(1).value = "Total de custos";
-      rCustos.getCell(1).font = { bold: true };
-      rCustos.getCell(2).value = totalCustos;
-      rCustos.getCell(2).numFmt = money;
-      const rManut = ws.getRow(row++);
-      rManut.getCell(1).value = "Total de manutenções";
-      rManut.getCell(1).font = { bold: true };
-      rManut.getCell(2).value = totalManut;
-      rManut.getCell(2).numFmt = money;
-      const rGeral = ws.getRow(row++);
-      rGeral.getCell(1).value = "Total geral";
-      rGeral.getCell(2).value = { formula: `B${row - 3}+B${row - 2}` };
-      rGeral.getCell(2).numFmt = money;
-      [1, 2].forEach((c) => {
-        rGeral.getCell(c).font = { bold: true, color: { argb: white } };
-        rGeral.getCell(c).fill = { type: "pattern", pattern: "solid", fgColor: { argb: brandFill } };
-      });
-
       // ---------- Veículos ----------
       const wsV = wb.addWorksheet("Veículos", { views: [{ state: "frozen", ySplit: 1 }] });
       wsV.columns = [
@@ -549,7 +410,6 @@ function RelatoriosPage() {
         { header: "Tipo", key: "tipo", width: 18 },
         { header: "Cor", key: "cor", width: 14 },
         { header: "Situação", key: "status", width: 18 },
-        { header: "Patrimônio", key: "codigo", width: 16 },
       ];
       styleHeader(wsV.getRow(1), brandFill, white);
       veiculosFiltrados.forEach((v) => {
@@ -566,116 +426,6 @@ function RelatoriosPage() {
       wsV.autoFilter = { from: "A1", to: "G1" };
       applyBorders(wsV);
 
-      // ---------- Custos ----------
-      const wsC = wb.addWorksheet("Custos", { views: [{ state: "frozen", ySplit: 1 }] });
-      wsC.columns = [
-        { header: "Data", key: "data", width: 14 },
-        { header: "Veículo", key: "veiculo", width: 32 },
-        { header: "Categoria", key: "categoria", width: 18 },
-        { header: "KM", key: "km", width: 12 },
-        { header: "Valor (R$)", key: "valor", width: 16 },
-        { header: "Descrição", key: "descricao", width: 40 },
-      ];
-      styleHeader(wsC.getRow(1), brandFill, white);
-      custosFiltrados.forEach((c) => {
-        const [y, m, d] = c.data.split("-").map(Number);
-        wsC.addRow({
-          data: new Date(y, m - 1, d),
-          veiculo: veiculoNomeMap.get(c.veiculo_id) ?? "—",
-          categoria: tipoCustoLabel[c.tipo as TipoCusto] ?? c.tipo,
-          km: c.km ?? null,
-          valor: Number(c.valor),
-          descricao: c.descricao ?? "",
-        });
-      });
-      wsC.getColumn("data").numFmt = "dd/mm/yyyy";
-      wsC.getColumn("km").numFmt = intFmt;
-      wsC.getColumn("valor").numFmt = money;
-      if (custosFiltrados.length > 0) {
-        const lastRow = wsC.rowCount;
-        const totalRow = wsC.addRow({
-          km: "Total",
-          valor: { formula: `SUM(E2:E${lastRow})` },
-        });
-        totalRow.font = { bold: true };
-        totalRow.getCell(4).alignment = { horizontal: "right" };
-        totalRow.getCell(5).numFmt = money;
-        totalRow.eachCell((cell) => {
-          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: softFill } };
-        });
-      }
-      wsC.autoFilter = { from: "A1", to: "F1" };
-      applyBorders(wsC);
-
-      // ---------- Manutenções ----------
-      const wsM = wb.addWorksheet("Manutenções", { views: [{ state: "frozen", ySplit: 1 }] });
-      wsM.columns = [
-        { header: "Data", key: "data", width: 14 },
-        { header: "Veículo", key: "veiculo", width: 32 },
-        { header: "Peça / Serviço", key: "peca", width: 30 },
-        { header: "Oficina", key: "oficina", width: 24 },
-        { header: "Valor (R$)", key: "valor", width: 16 },
-        { header: "Observações", key: "obs", width: 40 },
-      ];
-      styleHeader(wsM.getRow(1), brandFill, white);
-      manutFiltradas.forEach((m) => {
-        const [y, mo, d] = m.data.split("-").map(Number);
-        wsM.addRow({
-          data: new Date(y, mo - 1, d),
-          veiculo: veiculoNomeMap.get(m.veiculo_id) ?? "—",
-          peca: m.peca_servico,
-          oficina: m.oficina ?? "",
-          valor: m.valor != null ? Number(m.valor) : null,
-          obs: m.observacoes ?? "",
-        });
-      });
-      wsM.getColumn("data").numFmt = "dd/mm/yyyy";
-      wsM.getColumn("valor").numFmt = money;
-      if (manutFiltradas.length > 0) {
-        const lastRow = wsM.rowCount;
-        const totalRow = wsM.addRow({
-          oficina: "Total",
-          valor: { formula: `SUM(E2:E${lastRow})` },
-        });
-        totalRow.font = { bold: true };
-        totalRow.getCell(4).alignment = { horizontal: "right" };
-        totalRow.getCell(5).numFmt = money;
-        totalRow.eachCell((cell) => {
-          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: softFill } };
-        });
-      }
-      wsM.autoFilter = { from: "A1", to: "F1" };
-      applyBorders(wsM);
-
-      // ---------- Por categoria ----------
-      const wsCat = wb.addWorksheet("Por categoria", { views: [{ showGridLines: false }] });
-      wsCat.columns = [
-        { header: "Categoria", key: "cat", width: 24 },
-        { header: "Total (R$)", key: "total", width: 18 },
-        { header: "% do total", key: "pct", width: 14 },
-      ];
-      styleHeader(wsCat.getRow(1), brandFill, white);
-      const cats: TipoCusto[] = ["combustivel", "manutencao", "seguro", "imprevisto", "outros"];
-      cats.forEach((cat, i) => {
-        const linha = i + 2;
-        wsCat.addRow({
-          cat: tipoCustoLabel[cat],
-          total: { formula: `SUMIF(Custos!C:C,"${tipoCustoLabel[cat]}",Custos!E:E)` },
-          pct: { formula: `IFERROR(B${linha}/$B$${cats.length + 2},0)` },
-        });
-      });
-      const totalCatRow = wsCat.addRow({
-        cat: "Total",
-        total: { formula: `SUM(B2:B${cats.length + 1})` },
-        pct: 1,
-      });
-      wsCat.getColumn("total").numFmt = money;
-      wsCat.getColumn("pct").numFmt = "0.0%";
-      totalCatRow.font = { bold: true };
-      totalCatRow.eachCell((cell) => {
-        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: softFill } };
-      });
-      applyBorders(wsCat);
 
       const buffer = await wb.xlsx.writeBuffer();
       const blob = new Blob([buffer], {
@@ -697,15 +447,6 @@ function RelatoriosPage() {
     }
   };
 
-  const anosDisponiveis = Array.from(
-    new Set([
-      ...(custos.data ?? []).map((c) => c.data.slice(0, 4)),
-      ...(manutencoes.data ?? []).map((m) => m.data.slice(0, 4)),
-      String(hoje.getFullYear()),
-    ]),
-  )
-    .sort()
-    .reverse();
 
   return (
     <div className="space-y-6">
@@ -714,7 +455,7 @@ function RelatoriosPage() {
           <FileText className="h-6 w-6" /> Relatórios
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Situação da frota, custos e manutenções — por período, departamento, tipo ou veículo
+          Situação da frota — por departamento, tipo, situação ou veículo
         </p>
       </div>
 
@@ -723,31 +464,6 @@ function RelatoriosPage() {
           <CardTitle className="text-base">Filtros</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="space-y-2">
-            <Label>Mês</Label>
-            <Select value={mes} onValueChange={setMes}>
-              <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Ano inteiro</SelectItem>
-                {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                  <SelectItem key={m} value={String(m)}>
-                    {String(m).padStart(2, "0")} — {MESES_PT[m - 1]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Ano</Label>
-            <Select value={ano} onValueChange={setAno}>
-              <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {anosDisponiveis.map((a) => (
-                  <SelectItem key={a} value={a}>{a}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
           <div className="space-y-2">
             <Label>Departamento</Label>
             <Select value={dep} onValueChange={setDep}>
@@ -821,12 +537,9 @@ function RelatoriosPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
         <MiniStat label="Veículos" value={String(veiculosFiltrados.length)} />
         <MiniStat label="Ativos" value={String(ativos)} />
-        <MiniStat label="Fora de operação" value={String(naoAtivos)} />
-        <MiniStat label="Custos" value={formatBRL(totalCustos)} />
-        <MiniStat label="Manutenções" value={formatBRL(totalManut)} />
       </div>
 
       <Card>
