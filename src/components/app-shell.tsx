@@ -2,10 +2,6 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   Truck,
-  Wallet,
-  CalendarClock,
-  Users,
-  Wrench,
   Bell,
   FileText,
   Menu,
@@ -31,10 +27,6 @@ const nav = [
   { to: "/painel", label: "Painel", icon: LayoutDashboard },
   { to: "/avisos", label: "Avisos", icon: Bell },
   { to: "/veiculos", label: "Veículos", icon: Truck },
-  { to: "/motoristas", label: "Motoristas", icon: Users },
-  { to: "/custos", label: "Custos", icon: Wallet },
-  { to: "/manutencoes", label: "Manutenções", icon: Wrench },
-  { to: "/vencimentos", label: "Vencimentos", icon: CalendarClock },
   { to: "/relatorios", label: "Relatórios", icon: FileText },
 ] as const;
 

@@ -1,18 +1,9 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
-import {
-  listVeiculos,
-  listCustos,
-  listDocumentos,
-  formatBRL,
-  statusVeiculoLabel,
-  veiculoLabel,
-} from "@/lib/frota";
+import { listVeiculos, statusVeiculoLabel } from "@/lib/frota";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Truck, Wallet, Wrench, CheckCircle2, PowerOff, CalendarClock } from "lucide-react";
+import { Truck, Wrench, CheckCircle2, PowerOff } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { VencimentosCalendar } from "@/components/vencimentos-calendar";
 
 
 export const Route = createFileRoute("/_authenticated/painel")({
@@ -20,30 +11,13 @@ export const Route = createFileRoute("/_authenticated/painel")({
 });
 
 function PainelPage() {
-  const navigate = useNavigate();
   const veiculos = useQuery({ queryKey: ["veiculos"], queryFn: listVeiculos });
-  const custos = useQuery({ queryKey: ["custos"], queryFn: listCustos });
-  const documentos = useQuery({ queryKey: ["documentos"], queryFn: listDocumentos });
 
   const lista = veiculos.data ?? [];
   const totalVeiculos = lista.length;
   const ativos = lista.filter((v) => v.status === "ativo").length;
   const emManutencao = lista.filter((v) => v.status === "manutencao").length;
   const desativados = lista.filter((v) => v.status === "desativado").length;
-
-  const now = new Date();
-  const custoMes = (custos.data ?? [])
-    .filter((c) => {
-      const [y, m] = c.data.split("-").map(Number);
-      return y === now.getFullYear() && m - 1 === now.getMonth();
-    })
-    .reduce((acc, c) => acc + Number(c.valor), 0);
-
-  const veiculoMap = useMemo(() => {
-    const m = new Map<string, string>();
-    lista.forEach((v) => m.set(v.id, `${veiculoLabel(v)} (${v.placa})`));
-    return m;
-  }, [lista]);
 
   return (
     <div className="space-y-6">
@@ -59,26 +33,6 @@ function PainelPage() {
         <StatCard label={statusVeiculoLabel.desativado} value={String(desativados)} icon={PowerOff} tone="muted" />
       </div>
 
-      <div>
-        <StatCard label="Custo total do mês" value={formatBRL(custoMes)} icon={Wallet} />
-      </div>
-
-
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <CalendarClock className="h-4 w-4 text-primary" />
-            Agenda de vencimentos
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <VencimentosCalendar
-            documentos={documentos.data ?? []}
-            veiculoMap={veiculoMap}
-            onSelect={() => navigate({ to: "/vencimentos" })}
-          />
-        </CardContent>
-      </Card>
     </div>
   );
 }
