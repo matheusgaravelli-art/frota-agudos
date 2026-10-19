@@ -540,6 +540,7 @@ function RelatoriosPage() {
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
         <MiniStat label="Veículos" value={String(veiculosFiltrados.length)} />
         <MiniStat label="Ativos" value={String(ativos)} />
+        <MiniStat label="Fora de operação" value={String(naoAtivos)} />
       </div>
 
       <Card>
