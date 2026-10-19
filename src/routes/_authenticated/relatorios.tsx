@@ -157,8 +157,8 @@ function RelatoriosPage() {
   ]
     .filter(Boolean)
     .join(" • ") || "Frota completa";
+
   const nomeArquivoPadrao = `relatorio-frota-${hoje.toISOString().slice(0, 10)}`;
-  const nomeArquivoPadrao = `relatorio-frota-${ano}-${mes === "todos" ? "ano" : String(mes).padStart(2, "0")}`;
   const nomeArquivo =
     nomeArquivoInput.trim().replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").trim() ||
     nomeArquivoPadrao;
@@ -337,7 +337,6 @@ function RelatoriosPage() {
       const brandFill = "FF0F172A";
       const softFill = "FFF1F5F9";
       const white = "FFFFFFFF";
-      const money = "R$ #,##0.00";
       const intFmt = "#,##0";
 
       type WsLike = {
@@ -362,7 +361,7 @@ function RelatoriosPage() {
       tituloBloco(ws, "Relatório Gerencial de Frota", "A1:C1", 30);
       ws.mergeCells("A2:C2");
       const sub = ws.getCell("A2");
-      sub.value = `${periodoLabel} — ${escopoLabel} — emitido em ${hoje.toLocaleDateString("pt-BR")}`;
+      sub.value = `${escopoLabel} — emitido em ${hoje.toLocaleDateString("pt-BR")}`;
       sub.font = { italic: true, color: { argb: "FF64748B" } };
       sub.alignment = { horizontal: "left", indent: 1 };
 
@@ -410,6 +409,7 @@ function RelatoriosPage() {
         { header: "Tipo", key: "tipo", width: 18 },
         { header: "Cor", key: "cor", width: 14 },
         { header: "Situação", key: "status", width: 18 },
+        { header: "Patrimônio", key: "codigo", width: 16 },
       ];
       styleHeader(wsV.getRow(1), brandFill, white);
       veiculosFiltrados.forEach((v) => {
