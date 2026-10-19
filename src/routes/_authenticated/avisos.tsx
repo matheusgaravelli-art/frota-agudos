@@ -1,17 +1,12 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  listDocumentos,
-  listVeiculos,
   listLembretes,
   formatData,
   statusVencimento,
   diasAteVencimento,
-  tipoDocLabel,
-  type TipoDocumento,
-  veiculoLabel,
 } from "@/lib/frota";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -36,12 +31,12 @@ export const Route = createFileRoute("/_authenticated/avisos")({
       {
         name: "description",
         content:
-          "Vencimentos de documentos, seguros e revisões da frota mais lembretes personalizados, ordenados por urgência.",
+          "Lembretes personalizados da frota, ordenados por urgência.",
       },
       { property: "og:title", content: "Avisos e lembretes da frota" },
       {
         property: "og:description",
-        content: "Acompanhe vencimentos e crie lembretes personalizados com data.",
+        content: "Crie e acompanhe lembretes personalizados com data.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -58,21 +53,8 @@ const STATUS = {
 
 function AvisosPage() {
   const qc = useQueryClient();
-  const documentos = useQuery({ queryKey: ["documentos"], queryFn: listDocumentos });
-  const veiculos = useQuery({ queryKey: ["veiculos"], queryFn: listVeiculos });
   const lembretes = useQuery({ queryKey: ["lembretes"], queryFn: listLembretes });
 
-  const veiculoMap = useMemo(() => {
-    const m = new Map<string, string>();
-    (veiculos.data ?? []).forEach((v) => m.set(v.id, `${veiculoLabel(v)} (${v.placa})`));
-    return m;
-  }, [veiculos.data]);
-
-  const items = useMemo(() => {
-    return (documentos.data ?? [])
-      .map((d) => ({ ...d, _st: statusVencimento(d.vencimento), _dias: diasAteVencimento(d.vencimento) }))
-      .sort((a, b) => a._dias - b._dias);
-  }, [documentos.data]);
 
   const pendentes = useMemo(
     () =>
@@ -107,9 +89,9 @@ function AvisosPage() {
     onError: (e: Error) => toast.error(`Não foi possível excluir: ${e.message}`),
   });
 
-  const vencidos = items.filter((i) => i._st === "vencido");
-  const atencao = items.filter((i) => i._st === "proximo");
-  const ok = items.filter((i) => i._st === "ok");
+  const vencidos = pendentes.filter((i) => i._st === "vencido");
+  const atencao = pendentes.filter((i) => i._st === "proximo");
+  const ok = pendentes.filter((i) => i._st === "ok");
 
   return (
     <div className="space-y-6">
@@ -184,57 +166,6 @@ function AvisosPage() {
                     </div>
                   </CardContent>
                 </Card>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      <section className="space-y-2">
-        <h2 className="text-lg font-semibold">Vencimentos</h2>
-        {items.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center text-muted-foreground">
-              Nenhum vencimento cadastrado ainda.
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-2">
-            {items.map((i) => {
-              const s = STATUS[i._st];
-              return (
-                <Link key={i.id} to="/vencimentos">
-                  <Card className="hover:bg-muted/50 transition-colors">
-                    <CardContent className="py-4 flex items-center gap-3">
-                      <span className={cn("h-3 w-3 rounded-full shrink-0", s.dot)} />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-semibold">
-                            {tipoDocLabel[i.tipo as TipoDocumento] ?? i.tipo}
-                          </span>
-                          <span className={cn("text-xs px-2 py-0.5 rounded-full border font-medium", s.badge)}>
-                            {s.label}
-                          </span>
-                        </div>
-                        <div className="text-sm text-muted-foreground mt-0.5 truncate">
-                          {veiculoMap.get(i.veiculo_id) ?? "—"}
-                          {i.observacao ? ` · ${i.observacao}` : ""}
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <div className="text-sm font-semibold tabular-nums">{formatData(i.vencimento)}</div>
-                        <div className={cn(
-                          "text-xs",
-                          i._st === "vencido" ? "text-destructive" : i._st === "proximo" ? "text-warning-foreground" : "text-muted-foreground",
-                        )}>
-                          {i._st === "vencido"
-                            ? `${Math.abs(i._dias)} dia(s) atrás`
-                            : `em ${i._dias} dia(s)`}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
               );
             })}
           </div>
