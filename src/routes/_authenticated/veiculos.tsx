@@ -770,7 +770,6 @@ function VeiculoDialog({
               <Input
                 id="codigo"
                 name="codigo"
-                required
                 className="h-11"
                 defaultValue={editing?.codigo ?? editing?.nome ?? ""}
               />
@@ -780,7 +779,6 @@ function VeiculoDialog({
               <Input
                 id="placa"
                 name="placa"
-                required
                 defaultValue={editing?.placa ?? ""}
                 className="uppercase font-mono h-11"
               />
