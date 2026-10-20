@@ -11,6 +11,8 @@ import { Card, CardContent } from "@/components/ui/card";
 export const Route = createFileRoute("/_authenticated/aprovacoes")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Aprovação de Cadastros — Gestão de Frota" },
       { name: "description", content: "Aprove ou recuse os cadastros pendentes de acesso ao sistema de frota." },
       { property: "og:title", content: "Aprovação de Cadastros — Gestão de Frota" },

@@ -7,6 +7,14 @@ import { cn } from "@/lib/utils";
 
 
 export const Route = createFileRoute("/_authenticated/painel")({
+  head: () => ({ meta: [
+    { title: "Painel da frota | Gestão de Frota" },
+    { name: "description", content: "Totais de veículos por situação: ativos, em manutenção e desativados." },
+    { property: "og:title", content: "Painel da frota | Gestão de Frota" },
+    { property: "og:description", content: "Acompanhe a situação dos veículos da frota." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: PainelPage,
 });
 

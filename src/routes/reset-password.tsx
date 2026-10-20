@@ -12,6 +12,8 @@ export const Route = createFileRoute("/reset-password")({
   ssr: false,
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Nova senha — Gestão de Frota" },
       { name: "description", content: "Crie uma nova senha de acesso ao sistema de gestão de frota." },
       { property: "og:title", content: "Nova senha — Gestão de Frota" },

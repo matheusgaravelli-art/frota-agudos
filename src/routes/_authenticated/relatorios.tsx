@@ -299,6 +299,19 @@ function RelatoriosPage() {
       );
 
 
+      // Listagem preservada após a retirada dos módulos de lançamentos.
+      doc.addPage();
+      y = secao("Listagem de veículos", 20);
+      tabela(y,
+        ["Departamento", "Marca/Modelo", "Placa", "Tipo", "Cor", "Situação", "Patrimônio"],
+        veiculosFiltrados.map((v) => [
+          v.departamento || "Sem departamento", veiculoTitulo(v), v.placa || "—",
+          v.tipo || "—", v.cor || "—", statusVeiculoLabel[v.status ?? "ativo"],
+          v.codigo || v.nome || "—",
+        ]),
+        { styles: { overflow: "linebreak", fontSize: 8 }, bodyStyles: { fontSize: 8, cellPadding: 2 } },
+      );
+
       const pageCount = doc.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);

@@ -10,7 +10,6 @@ import {
   valorDepartamento,
   departamentoLivre,
   listVeiculos,
-  listCustos,
   listEtiquetas,
   listVeiculoEtiquetas,
   type Etiqueta,
@@ -64,7 +63,6 @@ import {
   Image as ImageIcon,
   FileText,
   Tag,
-  AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -108,13 +106,8 @@ function VeiculosPage() {
   });
   const etiquetasQ = useQuery({ queryKey: ["etiquetas"], queryFn: listEtiquetas });
   const vinculosQ = useQuery({ queryKey: ["veiculo_etiquetas"], queryFn: listVeiculoEtiquetas });
-  const custosQ = useQuery({ queryKey: ["custos"], queryFn: listCustos });
   const etiquetas = etiquetasQ.data ?? [];
   const vinculos = vinculosQ.data ?? [];
-  const pendentesPorVeiculo = new Map<string, number>();
-  (custosQ.data ?? [])
-    .filter((c) => c.pendente)
-    .forEach((c) => pendentesPorVeiculo.set(c.veiculo_id, (pendentesPorVeiculo.get(c.veiculo_id) ?? 0) + 1));
 
   const [etiquetasOpen, setEtiquetasOpen] = useState(false);
   const [busca, setBusca] = useState("");
@@ -160,9 +153,6 @@ function VeiculosPage() {
     onSuccess: () => {
       toast.success("Veículo removido");
       qc.invalidateQueries({ queryKey: ["veiculos"] });
-      qc.invalidateQueries({ queryKey: ["custos"] });
-      qc.invalidateQueries({ queryKey: ["documentos"] });
-      qc.invalidateQueries({ queryKey: ["manutencoes"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -292,7 +282,6 @@ function VeiculosPage() {
               etiquetas={etiquetas.filter((e) =>
                 vinculos.some((x) => x.veiculo_id === v.id && x.etiqueta_id === e.id),
               )}
-              custosPendentes={pendentesPorVeiculo.get(v.id) ?? 0}
               onEditar={() => openEdit(v)}
               onExcluir={() => {
                 if (confirm(`Excluir ${veiculoTitulo(v)} (${v.placa})?`)) deleteMut.mutate(v.id);
@@ -327,14 +316,12 @@ function tituloClasse(titulo: string) {
 function VeiculoCard({
   veiculo: v,
   etiquetas,
-  custosPendentes,
   onEditar,
   onExcluir,
   onLimparMarca,
 }: {
   veiculo: Veiculo;
   etiquetas: Etiqueta[];
-  custosPendentes: number;
   onEditar: () => void;
   onExcluir: () => void;
   onLimparMarca: () => void;
@@ -389,15 +376,6 @@ function VeiculoCard({
                     style={{ backgroundColor: e.cor }}
                   />
                 ))}
-              </span>
-            )}
-            {custosPendentes > 0 && (
-              <span
-                title={`${custosPendentes} custo(s) pendente(s)`}
-                aria-label={`${custosPendentes} custo pendente`}
-                className="text-warning"
-              >
-                <AlertCircle className="h-4 w-4" />
               </span>
             )}
             <span
@@ -486,11 +464,6 @@ function VeiculoCard({
                       {e.nome}
                     </span>
                   ))}
-                </div>
-              )}
-              {custosPendentes > 0 && (
-                <div className="text-warning-foreground text-xs pt-1">
-                  {custosPendentes} custo(s) pendente(s) de pagamento
                 </div>
               )}
               <div className="text-xs text-muted-foreground pt-1">
@@ -1237,8 +1210,7 @@ function ImportarDialog({
             >
               <span className="font-medium">1. Substituir todos os dados</span>
               <span className="block text-muted-foreground mt-1">
-                Apaga os veículos cadastrados e usa somente os da nova planilha. Custos,
-                manutenções e vencimentos ligados a eles também são apagados.
+                Apaga os veículos cadastrados e usa somente os da nova planilha.
               </span>
             </button>
             <button

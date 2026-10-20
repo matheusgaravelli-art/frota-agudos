@@ -11,9 +11,6 @@ export type Veiculo = {
   departamento: string | null;
   placa: string;
   marca_modelo: string | null;
-  motorista: string | null;
-  motorista_id: string | null;
-  km_atual: number;
   status: StatusVeiculo;
   fotos: string[];
   duplicado: boolean;
@@ -98,56 +95,6 @@ export function ordenarVeiculos<
 }
 
 
-export type TipoCusto = "combustivel" | "manutencao" | "seguro" | "imprevisto" | "outros";
-
-export type Custo = {
-  id: string;
-  veiculo_id: string;
-  tipo: TipoCusto;
-  valor: number;
-  km: number | null;
-  data: string;
-  descricao: string | null;
-  pendente: boolean;
-  created_at: string;
-};
-
-export type TipoDocumento = "documento" | "seguro" | "revisao";
-
-export type Documento = {
-  id: string;
-  veiculo_id: string;
-  tipo: TipoDocumento;
-  vencimento: string;
-  observacao: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-export type Motorista = {
-  id: string;
-  nome: string;
-  contato: string | null;
-  departamento: string | null;
-  cnh_path: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-export type Manutencao = {
-  id: string;
-  veiculo_id: string;
-  peca_servico: string;
-  data: string;
-  oficina: string | null;
-  observacoes: string | null;
-  valor: number | null;
-  km: number | null;
-  custo_id: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
 export const statusVeiculoLabel: Record<StatusVeiculo, string> = {
   ativo: "Ativo",
   manutencao: "Em manutenção",
@@ -160,48 +107,10 @@ export const statusVeiculoTone: Record<StatusVeiculo, string> = {
   desativado: "bg-muted text-muted-foreground border-border",
 };
 
-export const tipoCustoLabel: Record<TipoCusto, string> = {
-  combustivel: "Combustível",
-  manutencao: "Manutenção",
-  seguro: "Seguro",
-  imprevisto: "Imprevisto",
-  outros: "Outros",
-};
-
-export const tipoDocLabel: Record<TipoDocumento, string> = {
-  documento: "Documento",
-  seguro: "Seguro",
-  revisao: "Revisão",
-};
-
 export async function listVeiculos() {
   const { data, error } = await supabase.from("veiculos").select("*").order("nome");
   if (error) throw error;
   return data as Veiculo[];
-}
-
-export async function listCustos() {
-  const { data, error } = await supabase.from("custos").select("*").order("data", { ascending: false });
-  if (error) throw error;
-  return data as Custo[];
-}
-
-export async function listDocumentos() {
-  const { data, error } = await supabase.from("documentos").select("*").order("vencimento");
-  if (error) throw error;
-  return data as Documento[];
-}
-
-export async function listMotoristas() {
-  const { data, error } = await supabase.from("motoristas").select("*").order("nome");
-  if (error) throw error;
-  return data as Motorista[];
-}
-
-export async function listManutencoes() {
-  const { data, error } = await supabase.from("manutencoes").select("*").order("data", { ascending: false });
-  if (error) throw error;
-  return data as Manutencao[];
 }
 
 export async function listEtiquetas() {

@@ -4,19 +4,24 @@ import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import {
   listVeiculos,
-  listMotoristas,
-  listManutencoes,
-  formatData,
   statusVeiculoLabel,
   type StatusVeiculo,
   veiculoLabel,
 } from "@/lib/frota";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, Truck, User, Wrench } from "lucide-react";
+import { Search, Truck } from "lucide-react";
 
 const search = z.object({ q: z.string().optional().default("") });
 
 export const Route = createFileRoute("/_authenticated/busca")({
+  head: () => ({ meta: [
+    { title: "Busca de veículos | Gestão de Frota" },
+    { name: "description", content: "Busque veículos da frota por marca, placa ou patrimônio." },
+    { property: "og:title", content: "Busca de veículos | Gestão de Frota" },
+    { property: "og:description", content: "Encontre os veículos cadastrados na frota." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   validateSearch: search,
   component: BuscaPage,
 });
@@ -26,44 +31,18 @@ function BuscaPage() {
   const term = q.trim().toLowerCase();
 
   const veiculos = useQuery({ queryKey: ["veiculos"], queryFn: listVeiculos });
-  const motoristas = useQuery({ queryKey: ["motoristas"], queryFn: listMotoristas });
-  const manutencoes = useQuery({ queryKey: ["manutencoes"], queryFn: listManutencoes });
-
   const veicMatch = useMemo(() => {
     if (!term) return [];
     return (veiculos.data ?? []).filter(
       (v) =>
         (v.nome ?? "").toLowerCase().includes(term) ||
-        v.placa.toLowerCase().includes(term) ||
+        (v.codigo ?? "").toLowerCase().includes(term) ||
+        (v.placa ?? "").toLowerCase().includes(term) ||
         (v.marca_modelo ?? "").toLowerCase().includes(term),
     );
   }, [veiculos.data, term]);
 
-  const motMatch = useMemo(() => {
-    if (!term) return [];
-    return (motoristas.data ?? []).filter(
-      (m) => m.nome.toLowerCase().includes(term) || (m.contato ?? "").toLowerCase().includes(term),
-    );
-  }, [motoristas.data, term]);
-
-  const veiculoMap = useMemo(() => {
-    const m = new Map<string, string>();
-    (veiculos.data ?? []).forEach((v) => m.set(v.id, `${veiculoLabel(v)} (${v.placa})`));
-    return m;
-  }, [veiculos.data]);
-
-  const manutMatch = useMemo(() => {
-    if (!term) return [];
-    return (manutencoes.data ?? []).filter(
-      (m) =>
-        m.peca_servico.toLowerCase().includes(term) ||
-        (m.oficina ?? "").toLowerCase().includes(term) ||
-        (m.observacoes ?? "").toLowerCase().includes(term) ||
-        (veiculoMap.get(m.veiculo_id) ?? "").toLowerCase().includes(term),
-    );
-  }, [manutencoes.data, term, veiculoMap]);
-
-  const total = veicMatch.length + motMatch.length + manutMatch.length;
+  const total = veicMatch.length;
 
   return (
     <div className="space-y-6">
@@ -97,38 +76,6 @@ function BuscaPage() {
         </Card>
       )}
 
-      {motMatch.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><User className="h-4 w-4" /> Motoristas ({motMatch.length})</CardTitle></CardHeader>
-          <CardContent className="divide-y">
-            {motMatch.map((m) => (
-              <Link key={m.id} to="/motoristas" className="flex items-center justify-between py-2.5 hover:bg-muted/50 rounded-md px-2 -mx-2">
-                <div className="font-medium">{m.nome}</div>
-                <div className="text-xs text-muted-foreground">{m.contato ?? ""}</div>
-              </Link>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {manutMatch.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><Wrench className="h-4 w-4" /> Manutenções ({manutMatch.length})</CardTitle></CardHeader>
-          <CardContent className="divide-y">
-            {manutMatch.map((m) => (
-              <Link key={m.id} to="/manutencoes" className="flex items-center justify-between py-2.5 hover:bg-muted/50 rounded-md px-2 -mx-2 gap-3">
-                <div className="min-w-0">
-                  <div className="font-medium truncate">{m.peca_servico}</div>
-                  <div className="text-xs text-muted-foreground truncate">
-                    {veiculoMap.get(m.veiculo_id) ?? "—"}{m.oficina ? ` · ${m.oficina}` : ""}
-                  </div>
-                </div>
-                <div className="text-xs text-muted-foreground shrink-0">{formatData(m.data)}</div>
-              </Link>
-            ))}
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

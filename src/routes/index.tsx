@@ -6,9 +6,11 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Gestão de Frota — Acesso" },
-      { name: "description", content: "Sistema simples de gestão de frota: veículos, custos, manutenções e vencimentos." },
-      { property: "og:title", content: "Gestão de Frota" },
-      { property: "og:description", content: "Controle diário da frota — veículos, custos e vencimentos." },
+      { name: "description", content: "Sistema simples de gestão de frota: veículos, lembretes e relatórios." },
+      { property: "og:title", content: "Gestão de Frota — Acesso" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { property: "og:description", content: "Controle diário da frota — veículos, lembretes e relatórios." },
     ],
   }),
   component: LandingPage,
@@ -24,7 +26,7 @@ function LandingPage() {
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Gestão de Frota</h1>
           <p className="text-muted-foreground">
-            Controle diário de veículos, custos, manutenções e vencimentos.
+            Controle diário de veículos, lembretes e relatórios.
           </p>
         </div>
         <Button asChild size="lg" className="w-full h-12 text-base">

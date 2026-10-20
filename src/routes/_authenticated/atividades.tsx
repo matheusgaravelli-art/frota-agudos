@@ -10,10 +10,12 @@ import { Badge } from "@/components/ui/badge";
 export const Route = createFileRoute("/_authenticated/atividades")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Histórico de Atividades — Gestão de Frota" },
-      { name: "description", content: "Veja quem criou, editou ou excluiu veículos e custos, com data e hora." },
+      { name: "description", content: "Veja quem criou, editou ou excluiu veículos, com data e hora." },
       { property: "og:title", content: "Histórico de Atividades — Gestão de Frota" },
-      { property: "og:description", content: "Veja quem criou, editou ou excluiu veículos e custos, com data e hora." },
+      { property: "og:description", content: "Veja quem criou, editou ou excluiu veículos, com data e hora." },
     ],
   }),
   component: AtividadesPage,
@@ -29,6 +31,7 @@ function AtividadesPage() {
       const { data, error } = await supabase
         .from("atividades")
         .select("id, user_id, usuario_email, area, acao, descricao, created_at")
+        .eq("area", "veiculos")
         .order("created_at", { ascending: false })
         .limit(500);
       if (error) throw error;
@@ -65,7 +68,7 @@ function AtividadesPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Histórico de atividades</h1>
         <p className="text-sm text-muted-foreground">
-          Registros de criação, edição e exclusão em Veículos e Custos — mais recentes primeiro.
+          Registros de criação, edição e exclusão em Veículos — mais recentes primeiro.
         </p>
       </div>
 
