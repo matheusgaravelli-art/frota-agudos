@@ -30,6 +30,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export const Route = createFileRoute("/_authenticated/usuarios")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Gestão de Usuários — Gestão de Frota" },
       { name: "description", content: "Cadastre usuários e defina quem é administrador do sistema de frota." },
       { property: "og:title", content: "Gestão de Usuários — Gestão de Frota" },

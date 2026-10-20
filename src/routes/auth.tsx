@@ -12,6 +12,8 @@ export const Route = createFileRoute("/auth")({
   ssr: false,
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Entrar — Gestão de Frota" },
       { name: "description", content: "Acesse o sistema de gestão de frota com e-mail e senha." },
       { property: "og:title", content: "Entrar — Gestão de Frota" },

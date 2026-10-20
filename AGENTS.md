@@ -8,3 +8,6 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Retired fleet modules (drivers, expenses, maintenance records and document deadlines) must not be queried or rendered; vehicle maintenance remains a status and reminders remain manual. This preserves the reduced product scope.
+- Vehicle reports retain PDF/Excel vehicle listings and status summaries without expense, mileage or maintenance-history sections. This keeps exports aligned with the remaining fleet data.

@@ -113,7 +113,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Buscar veículo, motorista ou manutenção..."
+              placeholder="Buscar veículo por nome, placa ou patrimônio..."
               className="pl-9 h-10"
               aria-label="Busca global"
             />

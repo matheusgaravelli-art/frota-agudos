@@ -44,30 +44,6 @@ function BuscaPage() {
 
   const total = veicMatch.length;
 
-  return (motoristas.data ?? []).filter(
-      (m) => m.nome.toLowerCase().includes(term) || (m.contato ?? "").toLowerCase().includes(term),
-    );
-  }, [motoristas.data, term]);
-
-  const veiculoMap = useMemo(() => {
-    const m = new Map<string, string>();
-    (veiculos.data ?? []).forEach((v) => m.set(v.id, `${veiculoLabel(v)} (${v.placa})`));
-    return m;
-  }, [veiculos.data]);
-
-  const manutMatch = useMemo(() => {
-    if (!term) return [];
-    return (manutencoes.data ?? []).filter(
-      (m) =>
-        m.peca_servico.toLowerCase().includes(term) ||
-        (m.oficina ?? "").toLowerCase().includes(term) ||
-        (m.observacoes ?? "").toLowerCase().includes(term) ||
-        (veiculoMap.get(m.veiculo_id) ?? "").toLowerCase().includes(term),
-    );
-  }, [manutencoes.data, term, veiculoMap]);
-
-  const total = veicMatch.length + motMatch.length + manutMatch.length;
-
   return (
     <div className="space-y-6">
       <div>
