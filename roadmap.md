@@ -1,4 +1,9 @@
 # Remoção de funções
+## Abas de veículos
+- [ ] Compartilhar cards e edição entre Veículos e Desativados, com filtros e contadores isolados por status.
+- [ ] Testar filtros e mudança de status nas duas abas, preservando os dados.
+
+## Remoção anterior
 - [x] Remover referências, buscas e indicadores das áreas retiradas.
 - [x] Conferir áreas retiradas sem registros/CNH e remover atividades de Custos; preservar 205 veículos e 211 atividades de Veículos.
 - [x] Conferir relatórios PDF/Excel e navegação com sessão autenticada.
