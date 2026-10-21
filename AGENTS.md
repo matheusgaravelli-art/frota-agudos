@@ -11,3 +11,4 @@
 
 - Retired fleet modules (drivers, expenses, maintenance records and document deadlines) must not be queried or rendered; vehicle maintenance remains a status and reminders remain manual. This preserves the reduced product scope.
 - Vehicle reports retain PDF/Excel vehicle listings and status summaries without expense, mileage or maintenance-history sections. This keeps exports aligned with the remaining fleet data.
+- Vehicle status views share one listing/editor component and the same vehicle query cache; view filtering is centralized in a tested helper so status changes and counters stay consistent without duplicating records.
