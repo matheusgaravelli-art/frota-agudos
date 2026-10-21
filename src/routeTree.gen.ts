@@ -17,6 +17,7 @@ import { Route as AuthenticatedAprovacoesRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAtividadesRouteImport } from './routes/_authenticated/atividades'
 import { Route as AuthenticatedAvisosRouteImport } from './routes/_authenticated/avisos'
 import { Route as AuthenticatedBuscaRouteImport } from './routes/_authenticated/busca'
+import { Route as AuthenticatedDesativadosRouteImport } from './routes/_authenticated/desativados'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
@@ -61,6 +62,12 @@ const AuthenticatedBuscaRoute = AuthenticatedBuscaRouteImport.update({
   path: '/busca',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDesativadosRoute =
+  AuthenticatedDesativadosRouteImport.update({
+    id: '/desativados',
+    path: '/desativados',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
   id: '/painel',
   path: '/painel',
@@ -90,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/atividades': typeof AuthenticatedAtividadesRoute
   '/avisos': typeof AuthenticatedAvisosRoute
   '/busca': typeof AuthenticatedBuscaRoute
+  '/desativados': typeof AuthenticatedDesativadosRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
@@ -103,6 +111,7 @@ export interface FileRoutesByTo {
   '/atividades': typeof AuthenticatedAtividadesRoute
   '/avisos': typeof AuthenticatedAvisosRoute
   '/busca': typeof AuthenticatedBuscaRoute
+  '/desativados': typeof AuthenticatedDesativadosRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
@@ -118,6 +127,7 @@ export interface FileRoutesById {
   '/_authenticated/atividades': typeof AuthenticatedAtividadesRoute
   '/_authenticated/avisos': typeof AuthenticatedAvisosRoute
   '/_authenticated/busca': typeof AuthenticatedBuscaRoute
+  '/_authenticated/desativados': typeof AuthenticatedDesativadosRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/atividades'
     | '/avisos'
     | '/busca'
+    | '/desativados'
     | '/painel'
     | '/relatorios'
     | '/usuarios'
@@ -146,6 +157,7 @@ export interface FileRouteTypes {
     | '/atividades'
     | '/avisos'
     | '/busca'
+    | '/desativados'
     | '/painel'
     | '/relatorios'
     | '/usuarios'
@@ -160,6 +172,7 @@ export interface FileRouteTypes {
     | '/_authenticated/atividades'
     | '/_authenticated/avisos'
     | '/_authenticated/busca'
+    | '/_authenticated/desativados'
     | '/_authenticated/painel'
     | '/_authenticated/relatorios'
     | '/_authenticated/usuarios'
@@ -231,6 +244,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBuscaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/desativados': {
+      id: '/_authenticated/desativados'
+      path: '/desativados'
+      fullPath: '/desativados'
+      preLoaderRoute: typeof AuthenticatedDesativadosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/painel': {
       id: '/_authenticated/painel'
       path: '/painel'
@@ -267,6 +287,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAtividadesRoute: typeof AuthenticatedAtividadesRoute
   AuthenticatedAvisosRoute: typeof AuthenticatedAvisosRoute
   AuthenticatedBuscaRoute: typeof AuthenticatedBuscaRoute
+  AuthenticatedDesativadosRoute: typeof AuthenticatedDesativadosRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
@@ -278,6 +299,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAtividadesRoute: AuthenticatedAtividadesRoute,
   AuthenticatedAvisosRoute: AuthenticatedAvisosRoute,
   AuthenticatedBuscaRoute: AuthenticatedBuscaRoute,
+  AuthenticatedDesativadosRoute: AuthenticatedDesativadosRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
