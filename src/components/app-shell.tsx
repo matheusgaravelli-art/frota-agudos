@@ -2,6 +2,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   Truck,
+  Archive,
   Bell,
   FileText,
   Menu,
@@ -27,6 +28,7 @@ const nav = [
   { to: "/painel", label: "Painel", icon: LayoutDashboard },
   { to: "/avisos", label: "Avisos", icon: Bell },
   { to: "/veiculos", label: "Veículos", icon: Truck },
+  { to: "/desativados", label: "Desativados", icon: Archive },
   { to: "/relatorios", label: "Relatórios", icon: FileText },
 ] as const;
 
