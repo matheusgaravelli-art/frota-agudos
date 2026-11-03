@@ -196,6 +196,13 @@ export function VeiculosListagem({ aba = "veiculos", inicial }: { aba?: AbaVeicu
         </div>
       )}
 
+      {pendencia && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-muted px-4 py-2 text-sm">
+          <span>Mostrando apenas: <strong>{pendenciaLabel[pendencia]}</strong></span>
+          <Button size="sm" variant="ghost" onClick={() => setPendencia(null)}>Limpar</Button>
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[220px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
