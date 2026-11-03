@@ -76,7 +76,18 @@ const STATUS_MAP: Record<string, StatusVeiculo> = {
   inativo: "desativado",
 };
 
-export function VeiculosListagem({ aba = "veiculos" }: { aba?: AbaVeiculos }) {
+export type Pendencia = "foto" | "placa" | "departamento" | "patrimonio";
+export const pendenciaLabel: Record<Pendencia, string> = {
+  foto: "Sem foto", placa: "Sem placa", departamento: "Sem departamento", patrimonio: "Sem patrimônio",
+};
+export function temPendencia(v: Veiculo, p: Pendencia) {
+  if (p === "foto") return !(v.fotos ?? []).length;
+  if (p === "placa") return !(v.placa ?? "").trim();
+  if (p === "departamento") return !(v.departamento ?? "").trim();
+  return !(v.codigo ?? "").trim();
+}
+
+export function VeiculosListagem({ aba = "veiculos", inicial }: { aba?: AbaVeiculos; inicial?: { dep?: string; pendencia?: string; abrir?: string } }) {
   const desativados = aba === "desativados";
   const qc = useQueryClient();
   const { data: veiculos = [], isLoading } = useQuery({
@@ -91,7 +102,10 @@ export function VeiculosListagem({ aba = "veiculos" }: { aba?: AbaVeiculos }) {
   const [etiquetasOpen, setEtiquetasOpen] = useState(false);
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<"todos" | StatusVeiculo>("todos");
-  const [filtroDep, setFiltroDep] = useState<string>("todos");
+  const [filtroDep, setFiltroDep] = useState<string>(inicial?.dep || "todos");
+  const [pendencia, setPendencia] = useState<Pendencia | null>(
+    inicial?.pendencia && inicial.pendencia in pendenciaLabel ? (inicial.pendencia as Pendencia) : null,
+  );
   const [filtroEtiqueta, setFiltroEtiqueta] = useState<string>("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -105,7 +119,14 @@ export function VeiculosListagem({ aba = "veiculos" }: { aba?: AbaVeiculos }) {
   const filtered = filtrarVeiculos(veiculos, {
     aba, status: desativados ? "todos" : filtroStatus,
     departamento: filtroDep, etiqueta: filtroEtiqueta, busca,
-  }, vinculos);
+  }, vinculos).filter((v) => !pendencia || temPendencia(v, pendencia));
+  const abrirFeito = useRef(false);
+  useEffect(() => {
+    if (abrirFeito.current || !inicial?.abrir || !veiculos.length) return;
+    const alvo = veiculos.find((v) => v.id === inicial.abrir);
+    abrirFeito.current = true;
+    if (alvo) { setEditing(alvo); setDialogOpen(true); }
+  }, [inicial?.abrir, veiculos]);
 
   const deleteMut = useMutation({
     mutationFn: async (id: string) => {
@@ -172,6 +193,13 @@ export function VeiculosListagem({ aba = "veiculos" }: { aba?: AbaVeiculos }) {
         <div className="rounded-md border border-warning/40 bg-warning/10 px-4 py-3 text-sm">
           <strong>{marcados}</strong> veículo(s) marcado(s) com <strong>*</strong> por placa repetida
           na última planilha adicionada. Abra cada um, confira os dados e retire a marcação.
+        </div>
+      )}
+
+      {pendencia && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-muted px-4 py-2 text-sm">
+          <span>Mostrando apenas: <strong>{pendenciaLabel[pendencia]}</strong></span>
+          <Button size="sm" variant="ghost" onClick={() => setPendencia(null)}>Limpar</Button>
         </div>
       )}
 
