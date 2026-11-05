@@ -66,6 +66,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { filtrarVeiculos, pertenceAba, type AbaVeiculos } from "@/lib/veiculos-listagem";
+import { normalizarTipo, SEM_TIPO, SEM_TIPO_LABEL, TIPOS_VEICULO } from "@/lib/tipos-veiculo";
 
 const STATUS_MAP: Record<string, StatusVeiculo> = {
   ativo: "ativo",
@@ -692,7 +693,7 @@ function VeiculoDialog({
       const v = String(fd.get(k) || "").trim();
       return v || null;
     };
-    const tipo = texto("tipo");
+    const tipo = normalizarTipo(texto("tipo"));
     const cor = texto("cor");
     const marca_modelo = texto("marca_modelo");
     const observacao = texto("observacao");
@@ -754,13 +755,15 @@ function VeiculoDialog({
             </div>
             <div className="space-y-2">
               <Label htmlFor="tipo">Tipo</Label>
-              <Input
-                id="tipo"
-                name="tipo"
-                placeholder="Ex.: Carro, Caminhão, Ônibus..."
-                className="h-11"
-                defaultValue={editing?.tipo ?? ""}
-              />
+              <Select name="tipo" defaultValue={normalizarTipo(editing?.tipo) ?? SEM_TIPO}>
+                <SelectTrigger id="tipo" className="h-11"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={SEM_TIPO}>{SEM_TIPO_LABEL}</SelectItem>
+                  {TIPOS_VEICULO.map((t) => (
+                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="cor">Cor</Label>
@@ -1047,7 +1050,7 @@ function ImportarDialog({
           return {
             codigo: codigo || null,
             nome: codigo || null,
-            tipo: pick(r, ["tipo"]) || null,
+            tipo: normalizarTipo(pick(r, ["tipo"])),
             cor: pick(r, ["cor"]) || null,
             marca_modelo: pick(r, ["marcamodelo", "marca", "modelo"]) || null,
             departamento: pick(r, ["dep", "departamento", "secretaria"]) || null,
@@ -1092,7 +1095,7 @@ function ImportarDialog({
           const campos: Record<string, string> = {};
           if (codigo) campos.codigo = codigo;
           if (placa) campos.placa = placa;
-          const tipo = pick(r, ["tipo"]);
+          const tipo = normalizarTipo(pick(r, ["tipo"]));
           if (tipo) campos.tipo = tipo;
           const cor = pick(r, ["cor"]);
           if (cor) campos.cor = cor;

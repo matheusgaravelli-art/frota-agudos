@@ -76,12 +76,7 @@ function RelatoriosPage() {
         .sort((a, b) => a.localeCompare(b, "pt-BR", { sensitivity: "base" })),
     [todosVeiculos],
   );
-  const tipos = useMemo(
-    () =>
-      Array.from(new Set(todosVeiculos.map((v) => (v.tipo || "").trim()).filter(Boolean)))
-        .sort((a, b) => a.localeCompare(b, "pt-BR", { sensitivity: "base" })),
-    [todosVeiculos],
-  );
+  const tipos = TIPOS_VEICULO;
 
   const veiculosFiltrados = useMemo(
     () =>
@@ -89,7 +84,7 @@ function RelatoriosPage() {
         todosVeiculos.filter((v) => {
           if (veiculoId !== "todos" && v.id !== veiculoId) return false;
           if (dep !== "todos" && (v.departamento || "").trim() !== dep) return false;
-          if (tipo !== "todos" && (v.tipo || "").trim() !== tipo) return false;
+          if (tipo === SEM_TIPO ? (v.tipo || "").trim() !== "" : tipo !== "todos" && (v.tipo || "").trim() !== tipo) return false;
           if (!situacoes.has((v.status ?? "ativo") as StatusVeiculo)) return false;
           return true;
         }),
@@ -495,6 +490,7 @@ function RelatoriosPage() {
               <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value={SEM_TIPO}>{SEM_TIPO_LABEL}</SelectItem>
                 {tipos.map((t) => (
                   <SelectItem key={t} value={t}>{t}</SelectItem>
                 ))}
