@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { isPdf, nomeAnexo } from "@/lib/veiculo-fotos";
 
-export type AnexoAberto = { url: string; path: string } | null;
+export type AnexoAberto = { url: string; path: string; nome?: string } | null;
 
 /** Visualização ampliada de um anexo (foto ou PDF) com opção de baixar. */
 export function AnexoViewer({
@@ -21,11 +21,11 @@ export function AnexoViewer({
       const href = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = href;
-      a.download = nomeAnexo(anexo.path);
+      a.download = anexo.nome ?? nomeAnexo(anexo.path);
       document.body.appendChild(a);
       a.click();
       a.remove();
-      URL.revokeObjectURL(href);
+      setTimeout(() => URL.revokeObjectURL(href), 30_000);
     } catch {
       window.open(anexo.url, "_blank", "noopener");
     }
