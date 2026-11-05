@@ -1,3 +1,4 @@
+import { SEM_TIPO, SEM_TIPO_LABEL, TIPOS_VEICULO } from "@/lib/tipos-veiculo";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -147,7 +148,7 @@ function RelatoriosPage() {
   const escopoLabel = [
     veiculoId === "todos" ? null : veiculoNomeMap.get(veiculoId) ?? "—",
     dep === "todos" ? null : `Departamento: ${dep}`,
-    tipo === "todos" ? null : `Tipo: ${tipo}`,
+    tipo === "todos" ? null : `Tipo: ${tipo === SEM_TIPO ? SEM_TIPO_LABEL : tipo}`,
     situacaoFiltroLabel,
   ]
     .filter(Boolean)
