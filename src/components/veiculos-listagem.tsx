@@ -26,6 +26,7 @@ import {
   removeFoto,
   uploadFoto,
   isPdf,
+  nomeDownloadAnexo,
 } from "@/lib/veiculo-fotos";
 import { AnexoViewer, type AnexoAberto } from "@/components/anexo-viewer";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -396,7 +397,7 @@ function VeiculoCard({
                     <button
                       key={p}
                       type="button"
-                      onClick={() => setAnexoAberto({ url: urls[i], path: p })}
+                      onClick={() => setAnexoAberto({ url: urls[i], path: p, nome: nomeDownloadAnexo(v, fotos, p) })}
                       className="block w-full rounded-md border overflow-hidden"
                       title="Ver em tamanho ampliado"
                     >
@@ -871,7 +872,7 @@ function VeiculoDialog({
                       {urls[i] ? (
                         <button
                           type="button"
-                          onClick={() => setAnexoAberto({ url: urls[i], path })}
+                          onClick={() => setAnexoAberto({ url: urls[i], path, nome: nomeDownloadAnexo(editing, fotos, path) })}
                           className="block w-full"
                           title="Ver em tamanho ampliado"
                         >

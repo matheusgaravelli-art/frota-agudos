@@ -47,3 +47,17 @@ export async function getFotoUrls(paths: string[]) {
   if (error) throw error;
   return (data ?? []).map((d) => d.signedUrl ?? "");
 }
+
+/** Nome do PDF ao baixar: PLACA.CRLV.pdf (ou Patrimônio / SEM-PLACA), com " (2)" etc. se houver mais de um. */
+export function nomeDownloadAnexo(
+  veiculo: { placa?: string | null; codigo?: string | null } | null | undefined,
+  todos: string[],
+  path: string,
+) {
+  if (!isPdf(path)) return nomeAnexo(path);
+  const base = veiculo?.placa?.trim() || veiculo?.codigo?.trim() || "SEM-PLACA";
+  const pdfs = todos.filter(isPdf);
+  const idx = pdfs.indexOf(path);
+  const sufixo = idx > 0 ? ` (${idx + 1})` : "";
+  return `${base}.CRLV${sufixo}.pdf`;
+}
