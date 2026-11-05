@@ -40,7 +40,7 @@ export function AnexoViewer({
         {anexo &&
           (isPdf(anexo.path) ? (
             <iframe
-              src={anexo.url}
+              src={`${anexo.url}#toolbar=0`}
               title="Anexo em PDF"
               className="w-full h-[65vh] rounded-md border bg-muted"
             />
