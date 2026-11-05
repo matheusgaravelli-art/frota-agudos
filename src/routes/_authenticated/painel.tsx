@@ -8,6 +8,7 @@ import { pendenciaLabel, temPendencia, type Pendencia } from "@/components/veicu
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Truck, Wrench, CheckCircle2, PowerOff, ImageOff, Hash, Building2, Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SEM_TIPO_LABEL } from "@/lib/tipos-veiculo";
 
 export const Route = createFileRoute("/_authenticated/painel")({
   head: () => ({ meta: [
@@ -42,6 +43,13 @@ function PainelPage() {
   });
   const barras = [...porDep.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "pt-BR"));
   const maxBarra = Math.max(1, ...barras.map((b) => b[1]));
+  const porTipo = new Map<string, number>();
+  emUso.forEach((v) => {
+    const t = (v.tipo ?? "").trim() || SEM_TIPO_LABEL;
+    porTipo.set(t, (porTipo.get(t) ?? 0) + 1);
+  });
+  const barrasTipo = [...porTipo.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "pt-BR"));
+  const maxTipo = Math.max(1, ...barrasTipo.map((b) => b[1]));
 
   const pendencias: { p: Pendencia; icon: typeof ImageOff }[] = [
     { p: "foto", icon: ImageOff }, { p: "placa", icon: Hash },
@@ -100,6 +108,28 @@ function PainelPage() {
               </button>
             );
           })}
+        </CardContent>
+      </Card>
+
+      {/* Por tipo */}
+      <Card>
+        <CardHeader><CardTitle className="text-base">Veículos por tipo</CardTitle>
+          <p className="text-xs text-muted-foreground">Ativos e em manutenção.</p>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {barrasTipo.length === 0 && <p className="text-sm text-muted-foreground">Nenhum veículo em uso.</p>}
+          {barrasTipo.map(([t, n]) => (
+            <div key={t} className="p-1">
+              <div className="text-sm mb-1">{t}</div>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-4 rounded bg-muted overflow-hidden">
+                  <div className={cn("h-full rounded", t === SEM_TIPO_LABEL ? "bg-warning" : "bg-primary")}
+                    style={{ width: `${(n / maxTipo) * 100}%` }} />
+                </div>
+                <span className="w-10 text-right text-sm font-semibold tabular-nums">{n}</span>
+              </div>
+            </div>
+          ))}
         </CardContent>
       </Card>
 
