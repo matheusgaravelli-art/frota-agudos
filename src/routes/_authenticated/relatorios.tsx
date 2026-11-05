@@ -1,3 +1,4 @@
+import { SEM_TIPO, SEM_TIPO_LABEL, TIPOS_VEICULO } from "@/lib/tipos-veiculo";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -76,12 +77,7 @@ function RelatoriosPage() {
         .sort((a, b) => a.localeCompare(b, "pt-BR", { sensitivity: "base" })),
     [todosVeiculos],
   );
-  const tipos = useMemo(
-    () =>
-      Array.from(new Set(todosVeiculos.map((v) => (v.tipo || "").trim()).filter(Boolean)))
-        .sort((a, b) => a.localeCompare(b, "pt-BR", { sensitivity: "base" })),
-    [todosVeiculos],
-  );
+  const tipos = TIPOS_VEICULO;
 
   const veiculosFiltrados = useMemo(
     () =>
@@ -89,7 +85,7 @@ function RelatoriosPage() {
         todosVeiculos.filter((v) => {
           if (veiculoId !== "todos" && v.id !== veiculoId) return false;
           if (dep !== "todos" && (v.departamento || "").trim() !== dep) return false;
-          if (tipo !== "todos" && (v.tipo || "").trim() !== tipo) return false;
+          if (tipo === SEM_TIPO ? (v.tipo || "").trim() !== "" : tipo !== "todos" && (v.tipo || "").trim() !== tipo) return false;
           if (!situacoes.has((v.status ?? "ativo") as StatusVeiculo)) return false;
           return true;
         }),
@@ -152,7 +148,7 @@ function RelatoriosPage() {
   const escopoLabel = [
     veiculoId === "todos" ? null : veiculoNomeMap.get(veiculoId) ?? "—",
     dep === "todos" ? null : `Departamento: ${dep}`,
-    tipo === "todos" ? null : `Tipo: ${tipo}`,
+    tipo === "todos" ? null : `Tipo: ${tipo === SEM_TIPO ? SEM_TIPO_LABEL : tipo}`,
     situacaoFiltroLabel,
   ]
     .filter(Boolean)
@@ -495,6 +491,7 @@ function RelatoriosPage() {
               <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value={SEM_TIPO}>{SEM_TIPO_LABEL}</SelectItem>
                 {tipos.map((t) => (
                   <SelectItem key={t} value={t}>{t}</SelectItem>
                 ))}
