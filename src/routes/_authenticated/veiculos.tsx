@@ -7,6 +7,8 @@ const schema = z.object({
   dep: fallback(z.string(), "").default(""),
   pendencia: fallback(z.string(), "").default(""),
   abrir: fallback(z.string(), "").default(""),
+  status: fallback(z.string(), "").default(""),
+  tipo: fallback(z.string(), "").default(""),
 });
 
 export const Route = createFileRoute("/_authenticated/veiculos")({
