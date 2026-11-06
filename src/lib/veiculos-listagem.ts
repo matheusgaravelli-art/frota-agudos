@@ -1,3 +1,4 @@
+import { SEM_TIPO } from "@/lib/tipos-veiculo";
 import { ordenarVeiculos, SEM_DEPARTAMENTO, type StatusVeiculo } from "@/lib/frota";
 
 export type AbaVeiculos = "veiculos" | "desativados";
@@ -28,6 +29,7 @@ export function filtrarVeiculos<T extends Registro>(
     departamento: string;
     etiqueta: string;
     busca: string;
+    tipo?: string;
   },
   vinculos: { veiculo_id: string; etiqueta_id: string }[],
 ) {
@@ -38,6 +40,9 @@ export function filtrarVeiculos<T extends Registro>(
     const dep = (v.departamento || "").trim();
     if (filtros.departamento === SEM_DEPARTAMENTO && dep) return false;
     if (filtros.departamento !== "todos" && filtros.departamento !== SEM_DEPARTAMENTO && dep !== filtros.departamento) return false;
+    const tipo = (v.tipo || "").trim();
+    if (filtros.tipo === SEM_TIPO && tipo) return false;
+    if (filtros.tipo && filtros.tipo !== "todos" && filtros.tipo !== SEM_TIPO && tipo !== filtros.tipo) return false;
     if (filtros.etiqueta !== "todos" && !vinculos.some((x) => x.veiculo_id === v.id && x.etiqueta_id === filtros.etiqueta)) return false;
     return !q || [v.codigo, v.nome, v.placa, v.tipo, v.cor, v.departamento, v.marca_modelo]
       .some((campo) => campo?.toLowerCase().includes(q));
