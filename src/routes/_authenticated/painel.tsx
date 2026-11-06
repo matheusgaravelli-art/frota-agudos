@@ -8,7 +8,7 @@ import { pendenciaLabel, temPendencia, type Pendencia } from "@/components/veicu
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Truck, Wrench, CheckCircle2, PowerOff, ImageOff, Hash, Building2, Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { SEM_TIPO_LABEL } from "@/lib/tipos-veiculo";
+import { SEM_TIPO, SEM_TIPO_LABEL } from "@/lib/tipos-veiculo";
 
 export const Route = createFileRoute("/_authenticated/painel")({
   head: () => ({ meta: [
@@ -59,13 +59,14 @@ function PainelPage() {
 
   const recentes = [...lista].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 5);
 
-  const irVeiculos = (search: { dep?: string; pendencia?: string; abrir?: string }) =>
-    navigate({ to: "/veiculos", search: { dep: "", pendencia: "", abrir: "", ...search } });
+  const irVeiculos = (search: { dep?: string; pendencia?: string; abrir?: string; status?: string; tipo?: string }) =>
+    navigate({ to: "/veiculos", search: { dep: "", pendencia: "", abrir: "", status: "", tipo: "", ...search } });
+  const irStatus = (s: string) => (s === "desativado" ? navigate({ to: "/desativados" }) : irVeiculos({ status: s }));
 
   const trechos = [
-    { label: statusVeiculoLabel.ativo, n: ativos, cls: "bg-success" },
-    { label: statusVeiculoLabel.manutencao, n: manut, cls: "bg-warning" },
-    { label: statusVeiculoLabel.desativado, n: desat, cls: "bg-muted-foreground/50" },
+    { s: "ativo", label: statusVeiculoLabel.ativo, n: ativos, cls: "bg-success" },
+    { s: "manutencao", label: statusVeiculoLabel.manutencao, n: manut, cls: "bg-warning" },
+    { s: "desativado", label: statusVeiculoLabel.desativado, n: desat, cls: "bg-muted-foreground/50" },
   ];
 
   return (
@@ -77,10 +78,10 @@ function PainelPage() {
 
       {/* 1. Totais */}
       <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total de veículos" value={total} icon={Truck} />
-        <StatCard label="Ativos" value={ativos} icon={CheckCircle2} tone="success" />
-        <StatCard label="Em manutenção" value={manut} icon={Wrench} tone="warning" />
-        <StatCard label="Desativados" value={desat} icon={PowerOff} />
+        <StatCard label="Total de veículos" value={total} icon={Truck} onClick={() => irVeiculos({})} />
+        <StatCard label="Ativos" value={ativos} icon={CheckCircle2} tone="success" onClick={() => irStatus("ativo")} />
+        <StatCard label="Em manutenção" value={manut} icon={Wrench} tone="warning" onClick={() => irStatus("manutencao")} />
+        <StatCard label="Desativados" value={desat} icon={PowerOff} onClick={() => irStatus("desativado")} />
       </div>
 
       {/* 2. Por secretaria */}
@@ -94,7 +95,7 @@ function PainelPage() {
             const sem = dep === SEM_DEPARTAMENTO;
             return (
               <button key={dep} type="button" onClick={() => irVeiculos({ dep })}
-                className="group block w-full text-left rounded-md p-1 hover:bg-accent transition-colors">
+                className="group block w-full cursor-pointer text-left rounded-md p-1 hover:bg-accent transition-colors">
                 <div className="text-sm mb-1 truncate" title={sem ? SEM_DEPARTAMENTO_LABEL : dep}>
                   {sem ? SEM_DEPARTAMENTO_LABEL : dep}
                 </div>
@@ -114,12 +115,13 @@ function PainelPage() {
       {/* Por tipo */}
       <Card>
         <CardHeader><CardTitle className="text-base">Veículos por tipo</CardTitle>
-          <p className="text-xs text-muted-foreground">Ativos e em manutenção.</p>
+          <p className="text-xs text-muted-foreground">Ativos e em manutenção. Clique numa barra para ver os veículos.</p>
         </CardHeader>
         <CardContent className="space-y-2">
           {barrasTipo.length === 0 && <p className="text-sm text-muted-foreground">Nenhum veículo em uso.</p>}
           {barrasTipo.map(([t, n]) => (
-            <div key={t} className="p-1">
+            <button key={t} type="button" onClick={() => irVeiculos({ tipo: t === SEM_TIPO_LABEL ? SEM_TIPO : t })}
+              className="block w-full cursor-pointer text-left rounded-md p-1 hover:bg-accent transition-colors">
               <div className="text-sm mb-1">{t}</div>
               <div className="flex items-center gap-2">
                 <div className="flex-1 h-4 rounded bg-muted overflow-hidden">
@@ -128,7 +130,7 @@ function PainelPage() {
                 </div>
                 <span className="w-10 text-right text-sm font-semibold tabular-nums">{n}</span>
               </div>
-            </div>
+            </button>
           ))}
         </CardContent>
       </Card>
@@ -139,16 +141,16 @@ function PainelPage() {
         <CardContent className="space-y-3">
           <div className="flex h-6 w-full overflow-hidden rounded bg-muted">
             {trechos.map((t) => t.n > 0 && (
-              <div key={t.label} className={t.cls} style={{ width: `${pct(t.n, total)}%` }} title={`${t.label}: ${t.n}`} />
+              <button key={t.label} type="button" onClick={() => irStatus(t.s)} className={cn(t.cls, "h-full cursor-pointer hover:opacity-80")} style={{ width: `${pct(t.n, total)}%` }} title={`${t.label}: ${t.n}`} aria-label={`${t.label}: ${t.n}`} />
             ))}
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
             {trechos.map((t) => (
-              <span key={t.label} className="flex items-center gap-2">
+              <button key={t.label} type="button" onClick={() => irStatus(t.s)} className="flex cursor-pointer items-center gap-2 rounded px-1 hover:bg-accent">
                 <span className={cn("h-3 w-3 rounded-sm", t.cls)} />
                 {t.label}: <strong>{pct(t.n, total).toLocaleString("pt-BR")}%</strong>
                 <span className="text-muted-foreground">({t.n})</span>
-              </span>
+              </button>
             ))}
           </div>
         </CardContent>
@@ -163,7 +165,7 @@ function PainelPage() {
           <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             {pendencias.map(({ p, icon: Icon }) => (
               <button key={p} type="button" onClick={() => irVeiculos({ pendencia: p })}
-                className="rounded-lg border bg-card p-4 text-left hover:bg-accent transition-colors">
+                className="cursor-pointer rounded-lg border bg-card p-4 text-left hover:bg-accent transition-colors">
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
                   {pendenciaLabel[p]} <Icon className="h-4 w-4" />
                 </div>
@@ -190,7 +192,7 @@ function PainelPage() {
           {recentes.length === 0 && <p className="p-4 text-sm text-muted-foreground">Nenhum veículo cadastrado.</p>}
           {recentes.map((v: Veiculo) => (
             <button key={v.id} type="button" onClick={() => irVeiculos({ abrir: v.id })}
-              className="flex w-full flex-col gap-1 px-6 py-3 text-left hover:bg-accent transition-colors md:flex-row md:items-center md:gap-4">
+              className="flex w-full cursor-pointer flex-col gap-1 px-6 py-3 text-left hover:bg-accent transition-colors md:flex-row md:items-center md:gap-4">
               <span className="font-medium md:flex-1 truncate">{veiculoTitulo(v)}</span>
               <span className="text-sm text-muted-foreground md:w-24">{v.placa?.trim() || "Sem placa"}</span>
               <span className="text-sm text-muted-foreground md:w-64 truncate">{v.departamento?.trim() || SEM_DEPARTAMENTO_LABEL}</span>
@@ -204,13 +206,14 @@ function PainelPage() {
   );
 }
 
-function StatCard({ label, value, icon: Icon, tone = "default" }: {
-  label: string; value: number; icon: React.ComponentType<{ className?: string }>;
+function StatCard({ label, value, icon: Icon, tone = "default", onClick }: {
+  label: string; value: number; icon: React.ComponentType<{ className?: string }>; onClick: () => void;
   tone?: "default" | "success" | "warning";
 }) {
   const iconClass = tone === "success" ? "text-success" : tone === "warning" ? "text-warning" : "text-muted-foreground";
   return (
-    <Card>
+    <button type="button" onClick={onClick} className="cursor-pointer text-left rounded-lg transition-colors hover:opacity-90">
+    <Card className="h-full hover:bg-accent transition-colors">
       <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
         <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
         <Icon className={cn("h-5 w-5", iconClass)} />
@@ -219,5 +222,6 @@ function StatCard({ label, value, icon: Icon, tone = "default" }: {
         <div className="text-3xl font-bold tracking-tight tabular-nums">{value}</div>
       </CardContent>
     </Card>
+    </button>
   );
 }

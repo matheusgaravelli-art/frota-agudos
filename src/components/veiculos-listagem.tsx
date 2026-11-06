@@ -89,7 +89,7 @@ export function temPendencia(v: Veiculo, p: Pendencia) {
   return !(v.codigo ?? "").trim();
 }
 
-export function VeiculosListagem({ aba = "veiculos", inicial }: { aba?: AbaVeiculos; inicial?: { dep?: string; pendencia?: string; abrir?: string } }) {
+export function VeiculosListagem({ aba = "veiculos", inicial }: { aba?: AbaVeiculos; inicial?: { dep?: string; pendencia?: string; abrir?: string; status?: string; tipo?: string } }) {
   const desativados = aba === "desativados";
   const qc = useQueryClient();
   const { data: veiculos = [], isLoading } = useQuery({
@@ -103,7 +103,10 @@ export function VeiculosListagem({ aba = "veiculos", inicial }: { aba?: AbaVeicu
 
   const [etiquetasOpen, setEtiquetasOpen] = useState(false);
   const [busca, setBusca] = useState("");
-  const [filtroStatus, setFiltroStatus] = useState<"todos" | StatusVeiculo>("todos");
+  const [filtroStatus, setFiltroStatus] = useState<"todos" | StatusVeiculo>(
+    inicial?.status === "ativo" || inicial?.status === "manutencao" ? inicial.status : "todos",
+  );
+  const [filtroTipo, setFiltroTipo] = useState<string>(inicial?.tipo || "todos");
   const [filtroDep, setFiltroDep] = useState<string>(inicial?.dep || "todos");
   const [pendencia, setPendencia] = useState<Pendencia | null>(
     inicial?.pendencia && inicial.pendencia in pendenciaLabel ? (inicial.pendencia as Pendencia) : null,
@@ -120,7 +123,7 @@ export function VeiculosListagem({ aba = "veiculos", inicial }: { aba?: AbaVeicu
   const veiculosDaAba = veiculos.filter((v) => pertenceAba(v.status, aba));
   const filtered = filtrarVeiculos(veiculos, {
     aba, status: desativados ? "todos" : filtroStatus,
-    departamento: filtroDep, etiqueta: filtroEtiqueta, busca,
+    departamento: filtroDep, etiqueta: filtroEtiqueta, busca, tipo: filtroTipo,
   }, vinculos).filter((v) => !pendencia || temPendencia(v, pendencia));
   const abrirFeito = useRef(false);
   useEffect(() => {
@@ -242,6 +245,16 @@ export function VeiculosListagem({ aba = "veiculos", inicial }: { aba?: AbaVeicu
             <SelectItem value="manutencao">Em manutenção</SelectItem>
           </SelectContent>
         </Select>}
+        <Select value={filtroTipo} onValueChange={setFiltroTipo}>
+          <SelectTrigger className="h-11 w-full sm:w-[190px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos os tipos</SelectItem>
+            <SelectItem value={SEM_TIPO}>{SEM_TIPO_LABEL}</SelectItem>
+            {TIPOS_VEICULO.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+          </SelectContent>
+        </Select>
         <Select value={filtroEtiqueta} onValueChange={setFiltroEtiqueta}>
           <SelectTrigger className="h-11 w-full sm:w-[190px]">
             <SelectValue />

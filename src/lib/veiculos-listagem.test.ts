@@ -43,4 +43,10 @@ describe("Separação dos veículos por aba", () => {
     assert.equal(pertenceAba(reativado.status, "desativados"), false);
     assert.deepEqual(reativado, original);
   });
+  test("filtro de tipo e Sem tipo", () => {
+    const vs = [{ id: "c", status: "ativo" as StatusVeiculo, tipo: "Carro" }, { id: "s", status: "ativo" as StatusVeiculo, tipo: "" }];
+    assert.deepEqual(filtrarVeiculos(vs, { ...filtros, tipo: "Carro" }, []).map((v) => v.id), ["c"]);
+    assert.deepEqual(filtrarVeiculos(vs, { ...filtros, tipo: "sem" }, []).map((v) => v.id), ["s"]);
+    assert.equal(filtrarVeiculos(vs, { ...filtros, tipo: "todos" }, []).length, 2);
+  });
 });
