@@ -168,3 +168,17 @@ export function diasAteVencimento(vencimento: string): number {
   const venc = new Date(y, m - 1, d);
   return Math.ceil((venc.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
 }
+
+/** Converte um texto de departamento para uma das 11 secretarias, ou null (vazio) quando não reconhece. */
+export function normalizarDepartamento(texto?: string | null): string | null {
+  const limpar = (s: string) =>
+    s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+  const t = limpar(texto ?? "");
+  if (!t) return null;
+  const semPrefixo = (s: string) => s.replace(/^(secretaria|sec|secr)( municipal)?( de| da| do)? /, "");
+  for (const d of DEPARTAMENTOS) {
+    const alvo = limpar(d);
+    if (t === alvo || semPrefixo(t) === semPrefixo(alvo)) return d;
+  }
+  return null;
+}
