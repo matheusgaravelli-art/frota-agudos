@@ -73,9 +73,8 @@ function RelatoriosPage() {
 
   const departamentos = useMemo(
     () =>
-      Array.from(new Set(todosVeiculos.map((v) => (v.departamento || "").trim()).filter(Boolean)))
-        .sort((a, b) => a.localeCompare(b, "pt-BR", { sensitivity: "base" })),
-    [todosVeiculos],
+      [...DEPARTAMENTOS].sort((a, b) => a.localeCompare(b, "pt-BR", { sensitivity: "base" })),
+    [],
   );
   const tipos = TIPOS_VEICULO;
 
@@ -84,7 +83,7 @@ function RelatoriosPage() {
       ordenarVeiculos(
         todosVeiculos.filter((v) => {
           if (veiculoId !== "todos" && v.id !== veiculoId) return false;
-          if (dep !== "todos" && (v.departamento || "").trim() !== dep) return false;
+          if (dep === SEM_DEPARTAMENTO ? (v.departamento || "").trim() !== "" : dep !== "todos" && (v.departamento || "").trim() !== dep) return false;
           if (tipo === SEM_TIPO ? (v.tipo || "").trim() !== "" : tipo !== "todos" && (v.tipo || "").trim() !== tipo) return false;
           if (!situacoes.has((v.status ?? "ativo") as StatusVeiculo)) return false;
           return true;
@@ -479,6 +478,7 @@ function RelatoriosPage() {
               <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value={SEM_DEPARTAMENTO}>{SEM_DEPARTAMENTO_LABEL}</SelectItem>
                 {departamentos.map((d) => (
                   <SelectItem key={d} value={d}>{d}</SelectItem>
                 ))}

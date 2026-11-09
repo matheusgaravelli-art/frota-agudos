@@ -8,6 +8,7 @@ import {
   SEM_DEPARTAMENTO_LABEL,
   valorDepartamento,
   departamentoLivre,
+  normalizarDepartamento,
   listVeiculos,
   listEtiquetas,
   listVeiculoEtiquetas,
@@ -116,9 +117,7 @@ export function VeiculosListagem({ aba = "veiculos", inicial }: { aba?: AbaVeicu
   const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState<Veiculo | null>(null);
 
-  const departamentos = Array.from(
-    new Set([...DEPARTAMENTOS, ...veiculos.map((v) => (v.departamento || "").trim()).filter(Boolean)]),
-  ).sort((a, b) => a.localeCompare(b, "pt-BR", { sensitivity: "base" }));
+  const departamentos = [...DEPARTAMENTOS].sort((a, b) => a.localeCompare(b, "pt-BR", { sensitivity: "base" }));
 
   const veiculosDaAba = veiculos.filter((v) => pertenceAba(v.status, aba));
   const filtered = filtrarVeiculos(veiculos, {
@@ -450,11 +449,10 @@ function VeiculoCard({
                   <span className="text-muted-foreground">Cor:</span> {v.cor}
                 </div>
               )}
-              {v.departamento && (
-                <div>
-                  <span className="text-muted-foreground">Departamento:</span> {v.departamento}
-                </div>
-              )}
+              <div>
+                <span className="text-muted-foreground">Departamento:</span>{" "}
+                {v.departamento?.trim() || SEM_DEPARTAMENTO_LABEL}
+              </div>
               {v.observacao && (
                 <div>
                   <span className="text-muted-foreground">Observação:</span> {v.observacao}
@@ -1066,7 +1064,7 @@ function ImportarDialog({
             tipo: normalizarTipo(pick(r, ["tipo"])),
             cor: pick(r, ["cor"]) || null,
             marca_modelo: pick(r, ["marcamodelo", "marca", "modelo"]) || null,
-            departamento: pick(r, ["dep", "departamento", "secretaria"]) || null,
+            departamento: normalizarDepartamento(pick(r, ["dep", "departamento", "secretaria"])),
             placa,
             status: STATUS_MAP[statusTxt] ?? "ativo",
             fotos: [] as string[],
@@ -1115,7 +1113,8 @@ function ImportarDialog({
           const mm = pick(r, ["marcamodelo", "marca", "modelo"]);
           if (mm) campos.marca_modelo = mm;
           const dep = pick(r, ["dep", "departamento", "secretaria"]);
-          if (dep) campos.departamento = dep;
+          const depNorm = normalizarDepartamento(dep);
+          if (depNorm) campos.departamento = depNorm;
           const st = STATUS_MAP[pick(r, ["status"]).toLowerCase()];
           if (st) campos.status = st;
           const obs = pick(r, ["observacao", "observacoes", "obs"]);
