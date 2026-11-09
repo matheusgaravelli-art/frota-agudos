@@ -8,6 +8,7 @@ import {
   ordenarVeiculos,
   type StatusVeiculo,
   veiculoTitulo,
+  DEPARTAMENTOS, SEM_DEPARTAMENTO, SEM_DEPARTAMENTO_LABEL,
 } from "@/lib/frota";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -146,7 +147,7 @@ function RelatoriosPage() {
 
   const escopoLabel = [
     veiculoId === "todos" ? null : veiculoNomeMap.get(veiculoId) ?? "—",
-    dep === "todos" ? null : `Departamento: ${dep}`,
+    dep === "todos" ? null : `Departamento: ${dep === SEM_DEPARTAMENTO ? SEM_DEPARTAMENTO_LABEL : dep}`,
     tipo === "todos" ? null : `Tipo: ${tipo === SEM_TIPO ? SEM_TIPO_LABEL : tipo}`,
     situacaoFiltroLabel,
   ]
