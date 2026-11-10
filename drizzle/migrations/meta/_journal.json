@@ -36,6 +36,13 @@
       "when": 1792498139964,
       "tag": "0004_retire_removed_fleet_modules",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794309815913,
+      "tag": "0005_harden_rls_approved_users",
+      "breakpoints": true
     }
   ]
 }
